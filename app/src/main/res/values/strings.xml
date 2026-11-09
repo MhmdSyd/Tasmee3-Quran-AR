@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">تسميع</string>
+
+    <string name="reader_title">سورة الفاتحة</string>
+    <string name="reader_subtitle">الصفحة ١ · الجزء ١</string>
+    <string name="start_recitation">ابدأ التسميع</string>
+    <string name="next_page">الصفحة التالية</string>
+    <string name="prev_page">الصفحة السابقة</string>
+
+    <string name="listening_title">تسميع الفاتحة</string>
+    <string name="progress_title">تسميع الفاتحة</string>
+    <string name="finish">إنهاء</string>
+    <string name="hint">تلميح</string>
+
+    <string name="summary_title">ملخص التسميع</string>
+    <string name="repeat_recitation">أعد التسميع</string>
+    <string name="close">إغلاق</string>
+
+    <string name="settings_title">إعدادات التسميع</string>
+    <string name="settings">الإعدادات</string>
+    <string name="back">رجوع</string>
+
+    <string name="placeholder_note">شاشة مؤقتة — ستُبنى في خطوة لاحقة</string>
+</resources>
