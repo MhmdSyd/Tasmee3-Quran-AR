@@ -14,7 +14,7 @@ license texts are copied into the app (`assets/licenses/`).
 | Kotlin stdlib | Maven | Apache-2.0 | OK |
 | JUnit 4 / org.json (tests only) | Maven | EPL-1.0 / JSON License | OK (not shipped) |
 
-Planned, not bundled yet: `Abdou/quran-asr-small` model (MIT; training data CC-BY-4.0, attribution required).
+Planned, not bundled yet: `tarteel-ai/whisper-base-ar-quran` (Apache-2.0; derived from openai/whisper-base, MIT; training data undocumented on the model card) converted to ONNX int8 by `.github/workflows/export-model.yml`; sherpa-onnx (Apache-2.0) as the runtime. Test recitations from EveryAyah are used only in CI for evaluation and are not stored or shipped.
 
 ## How to swap (decision log)
 - **Font:** change `FONT_*` in `scripts/fetch_assets.sh` to another TTF named `uthmanic_hafs.ttf` (for example Amiri Quran, SIL OFL). No code change.

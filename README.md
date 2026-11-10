@@ -2,7 +2,7 @@
 
 Offline Android app for Quran recitation practice (Madani mushaf, Hafs from Asim). Recognition runs fully on the device; no network permission, no analytics.
 
-Spec: see `DEVELOPER_HANDOFF.md`. Status: **step 2 of 7 (Mushaf reader)**. Recitation screens are still placeholders.
+Spec: see `DEVELOPER_HANDOFF.md`. Status: **step 3 of 7 (speech model), part 1: model export and evaluation**. Recitation screens are still placeholders.
 
 ## Assets (fonts and Mushaf data)
 They are not in git. `bash scripts/fetch_assets.sh` downloads and verifies them (CI does this automatically). See `THIRD_PARTY.md` for licenses and open points.
@@ -19,5 +19,5 @@ On a phone you can also jump to any page with the search icon.
 ## Test
 `gradle test` (unit tests). Anything that needs the microphone or a phone is listed as a manual test in the step reports.
 
-## Swap the model
-Not implemented yet (step 3 adds the `SpeechModel` interface).
+## Speech model
+See `docs/MODEL.md`. Run Actions -> **Export Tarteel Whisper model** to convert and test it (report appears in the run summary).

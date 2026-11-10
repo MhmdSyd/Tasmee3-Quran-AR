@@ -1,0 +1,120 @@
+name: Export Tarteel Whisper model (ONNX int8)
+
+# Manual. Converts tarteel-ai/whisper-base-ar-quran (PyTorch) to the ONNX int8 files sherpa-onnx runs on Android,
+# then tests it on real recitation clips and writes a report to the run summary.
+# Run once with publish=false, read the report, then run again with publish=true to store the files as a Release.
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish the int8 files as a GitHub Release (after reading the report)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  HF_REPO: tarteel-ai/whisper-base-ar-quran
+  HF_REV: 5c3c53fdf9272c4f6ee0bee09a1e5a4a615ee25c
+  SHERPA_COMMIT: 60847b8db45212c02af72a3011b18ed6181b6526
+  MODEL_NAME: tarteel-base-ar-quran
+  RELEASE_TAG: model-tarteel-whisper-base-ar-quran-v1
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install openai-whisper transformers huggingface_hub onnx onnxruntime sherpa-onnx soundfile numpy kaldi-native-fbank
+          pip list 2>/dev/null | grep -i -E "^(torch|openai-whisper|transformers|onnx|onnxruntime|sherpa-onnx) "
+
+      - name: Download model (pinned revision)
+        run: |
+          python - <<'PY'
+          import os
+          from huggingface_hub import snapshot_download
+          snapshot_download(os.environ["HF_REPO"], revision=os.environ["HF_REV"], local_dir="work/hf",
+                            allow_patterns=["*.json", "merges.txt", "pytorch_model.bin"])
+          PY
+          ls -la work/hf
+
+      - name: Convert Hugging Face weights to openai-whisper format (with numeric check)
+        run: python tools/hf_to_openai_whisper.py work/hf work/tarteel.pt --verify
+
+      - name: Export to ONNX and quantize to int8 (sherpa-onnx exporter)
+        run: |
+          mkdir -p work/export && cd work/export
+          curl -fsSL "https://raw.githubusercontent.com/k2-fsa/sherpa-onnx/$SHERPA_COMMIT/scripts/whisper/export-onnx.py" -o export-onnx.orig.py
+          python "$GITHUB_WORKSPACE/tools/patch_sherpa_export.py" export-onnx.orig.py export-onnx.py
+          WHISPER_CHECKPOINT="$GITHUB_WORKSPACE/work/tarteel.pt" python export-onnx.py --model "$MODEL_NAME"
+          ls -la
+
+      - name: Fetch layout data (expected Quran text for scoring)
+        run: bash scripts/fetch_assets.sh
+
+      - name: Download test recitations (EveryAyah, Alafasy; test only, not stored)
+        run: |
+          mkdir -p work/mp3 work/clips
+          for id in 001001 001002 001005 001006 001007 112001 112002 112003 112004 002255; do
+            curl -fsSL -o "work/mp3/$id.mp3" "https://everyayah.com/data/Alafasy_128kbps/$id.mp3"
+            ffmpeg -loglevel error -y -i "work/mp3/$id.mp3" -ac 1 -ar 16000 "work/clips/$id.wav"
+          done
+          ffmpeg -loglevel error -y -i work/clips/001005.wav -i work/clips/001006.wav -i work/clips/001007.wav \
+            -filter_complex "[0][1][2]concat=n=3:v=0:a=1" -ac 1 -ar 16000 work/clips/001005-001007.wav
+          ffmpeg -loglevel error -y -i work/clips/112001.wav -i work/clips/112002.wav -i work/clips/112003.wav -i work/clips/112004.wav \
+            -filter_complex "[0][1][2][3]concat=n=4:v=0:a=1" -ac 1 -ar 16000 work/clips/112001-112004.wav
+          ls -la work/clips
+
+      - name: Evaluate fp32 reference vs int8 ONNX
+        run: |
+          python tools/eval_model.py --pt work/tarteel.pt \
+            --encoder "work/export/$MODEL_NAME-encoder.int8.onnx" \
+            --decoder "work/export/$MODEL_NAME-decoder.int8.onnx" \
+            --tokens "work/export/$MODEL_NAME-tokens.txt" \
+            --clips work/clips --layout app/src/main/assets/mushaf --out work/report.md
+          cat work/report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Collect output files
+        run: |
+          mkdir -p out
+          cp "work/export/$MODEL_NAME-encoder.int8.onnx" out/encoder.int8.onnx
+          cp "work/export/$MODEL_NAME-decoder.int8.onnx" out/decoder.int8.onnx
+          cp "work/export/$MODEL_NAME-tokens.txt" out/tokens.txt
+          cat > out/NOTICE.txt <<EOF2
+          Derived from $HF_REPO (Apache License 2.0), revision $HF_REV,
+          https://huggingface.co/$HF_REPO - itself a fine-tune of openai/whisper-base (MIT).
+          Changes: weights converted to openai-whisper format, exported to ONNX and dynamically int8-quantized
+          with the sherpa-onnx export script (Apache-2.0), commit $SHERPA_COMMIT.
+          EOF2
+          sed -i 's/^          //' out/NOTICE.txt
+          cp work/report.md out/report.md
+          (cd out && sha256sum encoder.int8.onnx decoder.int8.onnx tokens.txt | tee SHA256SUMS)
+          ls -la out
+          { echo; echo '## Files and checksums'; echo '```'; cat out/SHA256SUMS; ls -l out/*.onnx | awk '{print $5, $9}'; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tarteel-whisper-base-onnx-int8
+          path: out/
+
+      - name: Publish as GitHub Release
+        if: ${{ inputs.publish }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" out/* --clobber
+          else
+            gh release create "$RELEASE_TAG" out/* --title "Tarteel whisper-base-ar-quran, ONNX int8" --notes-file out/NOTICE.txt
+          fi

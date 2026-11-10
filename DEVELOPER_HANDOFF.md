@@ -62,6 +62,8 @@ Bundled in the app: model + tokens file, the Uthmani word list with Madani page/
 
 ## 6. Model decision (updated 2026-11-09)
 
+> **Override 2026-11-10:** the owner chose `tarteel-ai/whisper-base-ar-quran` instead of the model below. See `docs/MODEL.md`. The text below is kept for the comparison and the fallback.
+
 **Decision: start with `Abdou/quran-asr-small`, keep `tarteel-ai/whisper-tiny-ar-quran` as a fallback, and put the model behind an interface so it can be swapped.** All numbers below come from public Hugging Face model cards (the authors' own results) and should be re-checked on recordings that match real users (phone microphone, different reciters, noise). The task leaderboard is https://huggingface.co/spaces/deepdml/open_universal_arabic_quranic_asr_leaderboard (it loads dynamically; I could not read the live table).
 
 ### Chosen: Abdou/quran-asr-small
