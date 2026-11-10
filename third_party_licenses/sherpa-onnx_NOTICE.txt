@@ -1,0 +1,2 @@
+sherpa-onnx (https://github.com/k2-fsa/sherpa-onnx), Apache License 2.0, copyright Xiaomi Corporation and contributors.
+Used unmodified as a prebuilt Android library (AAR, with ONNX Runtime, MIT) to run the speech and voice-activity models on the device.

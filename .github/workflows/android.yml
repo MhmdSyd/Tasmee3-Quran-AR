@@ -34,6 +34,10 @@ jobs:
       - name: Unit tests and debug APK
         run: gradle --no-daemon test assembleDebug
 
+      - name: APK size report
+        run: |
+          ls -l app/build/outputs/apk/debug/*.apk | awk '{printf "APK: %.1f MB  %s\n", $5/1048576, $9}' | tee -a "$GITHUB_STEP_SUMMARY"
+
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:

@@ -56,6 +56,7 @@ import kotlinx.coroutines.launch
 fun ReaderScreen(
     initialPage: Int,
     onStartRecitation: () -> Unit,
+    onOpenMenu: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
@@ -78,6 +79,7 @@ fun ReaderScreen(
                 stringResource(R.string.page_label, ArabicDigits.fromInt(it.number), ArabicDigits.fromInt(it.juz))
             }.orEmpty(),
             onSearch = { showJump = true },
+            onMenu = onOpenMenu,
         )
         if (metaResult?.isFailure == true) {
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -117,12 +119,12 @@ fun ReaderScreen(
 }
 
 @Composable
-private fun TopBar(title: String, subtitle: String, onSearch: () -> Unit) {
+private fun TopBar(title: String, subtitle: String, onSearch: () -> Unit, onMenu: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().height(64.dp).padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = { /* menu comes in a later step */ }) {
+        IconButton(onClick = onMenu) {
             Icon(Icons.Filled.Menu, contentDescription = stringResource(R.string.menu), tint = Tokens.Ink)
         }
         Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {

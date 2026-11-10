@@ -15,7 +15,11 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
+        // arm64 = nearly all phones; x86_64 = emulator. Add "armeabi-v7a" for old 32-bit phones (+22 MB).
+        ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
     }
+    // Keep model files uncompressed inside the APK so they load fast.
+    androidResources { noCompress += listOf("onnx") }
 
     buildTypes {
         release {
@@ -37,6 +41,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.navigation:navigation-compose:2.8.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
+    // Fetched by scripts/fetch_assets.sh (not in git). Contains the Kotlin API and the native libraries.
+    implementation(files("libs/sherpa-onnx-2.0.1.aar"))
     implementation(platform("androidx.compose:compose-bom:2024.10.01"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")

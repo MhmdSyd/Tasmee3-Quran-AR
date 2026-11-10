@@ -14,3 +14,5 @@ captures/
 app/src/main/assets/mushaf/
 app/src/main/assets/licenses/
 app/src/main/res/font/*.ttf
+app/libs/*.aar
+app/src/main/assets/models/

@@ -9,12 +9,15 @@ license texts are copied into the app (`assets/licenses/`).
 |---|---|---|---|
 | KFGQPC Uthmanic Script HAFS v0.18 font (`uthmanic_hafs.ttf`, unmodified) | github.com/thetruetruth/quran-data-kfgqpc | KFGQPC EULA embedded in the font: free of cost to use, copy and distribute; the font cannot be sold, modified, altered, translated, reverse engineered or "reproduced" (same text also forbids "Reproduced", which conflicts with "Copy"). Full text: `third_party_licenses/KFGQPC_EULA.txt` | TEST-ONLY: wording is ambiguous; ask KFGQPC for written confirmation before a public release. Never modify or subset the font. |
 | Mushaf page/line layout and per-word text (converted by `tools/build_layout.py`) | github.com/zonetecde/mushaf-layout (QPC1 = 1405 print by default, QPC2 = 1421 print) | Repo code: ISC. **No license for the data.** README says it was generated from the Quran.com API | TEST-ONLY: data license not confirmed |
+| sherpa-onnx 2.0.1 Android AAR (includes ONNX Runtime, MIT), fetched pinned + SHA-256 | github.com/k2-fsa/sherpa-onnx releases | Apache-2.0 (ONNX Runtime: MIT) | OK |
+| Silero VAD model (`silero_vad.onnx`), pinned + SHA-256 | sherpa-onnx `asr-models` release (from github.com/snakers4/silero-vad) | MIT (`third_party_licenses/silero-vad_LICENSE.txt`) | OK |
+| Tarteel whisper-base-ar-quran, converted to ONNX int8 | GitHub Release of this repo, built by `.github/workflows/export-model.yml` | Apache-2.0 (base model openai/whisper-base: MIT). NOTICE shipped inside the release | OK to ship with attribution. Training data is undocumented on the model card. |
 | Cairo font (`cairo.ttf`, UI) | github.com/google/fonts, ofl/cairo | SIL OFL 1.1 | OK |
 | AndroidX / Jetpack Compose / Material 3 / Navigation / Coroutines | Maven | Apache-2.0 | OK |
 | Kotlin stdlib | Maven | Apache-2.0 | OK |
 | JUnit 4 / org.json (tests only) | Maven | EPL-1.0 / JSON License | OK (not shipped) |
 
-Planned, not bundled yet: `tarteel-ai/whisper-base-ar-quran` (Apache-2.0; derived from openai/whisper-base, MIT; training data undocumented on the model card) converted to ONNX int8 by `.github/workflows/export-model.yml`; sherpa-onnx (Apache-2.0) as the runtime. Test recitations from EveryAyah are used only in CI for evaluation and are not stored or shipped.
+Test recitations from EveryAyah are used only in the model export workflow for evaluation and are not stored or shipped.
 
 ## How to swap (decision log)
 - **Font:** change `FONT_*` in `scripts/fetch_assets.sh` to another TTF named `uthmanic_hafs.ttf` (for example Amiri Quran, SIL OFL). No code change.

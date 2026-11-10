@@ -55,4 +55,38 @@ ACTUAL="$(cd "$ASSETS/mushaf" && find . -type f -name '*.json' | LC_ALL=C sort |
 if [ "$ACTUAL" != "$OUT_SHA256" ]; then
   echo "Layout output checksum mismatch: expected $OUT_SHA256 got $ACTUAL" >&2; exit 1
 fi
+
+echo "== Speech runtime (sherpa-onnx) and voice-activity model"
+SHERPA_VERSION="2.0.1"
+SHERPA_AAR_SHA256="a8d09d1d32f3eb8520482c6d3d43fae674681c5b050385967c70a3c2c9bf0ee7"
+VAD_SHA256="9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6"
+mkdir -p "$ROOT/app/libs" "$ASSETS/models/whisper"
+fetch "https://github.com/k2-fsa/sherpa-onnx/releases/download/v$SHERPA_VERSION/sherpa-onnx-$SHERPA_VERSION.aar" \
+  "$ROOT/app/libs/sherpa-onnx-$SHERPA_VERSION.aar" "$SHERPA_AAR_SHA256"
+fetch "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx" \
+  "$ASSETS/models/silero_vad.onnx" "$VAD_SHA256"
+
+echo "== Whisper model (from this repo's GitHub Release, built by the Export workflow)"
+MODEL_REPO="${MODEL_REPO:-MhmdSyd/Tasmee3-Quran-AR}"
+MODEL_TAG="${MODEL_TAG:-model-tarteel-whisper-base-ar-quran-v1}"
+MODEL_URL="https://github.com/$MODEL_REPO/releases/download/$MODEL_TAG"
+MODEL_DIR="$ASSETS/models/whisper"
+if curl -fsSL --retry 2 -o "$CACHE/model-SHA256SUMS" "$MODEL_URL/SHA256SUMS"; then
+  for f in encoder.int8.onnx decoder.int8.onnx tokens.txt NOTICE.txt; do
+    curl -fsSL --retry 3 -o "$MODEL_DIR/$f" "$MODEL_URL/$f"
+  done
+  (cd "$MODEL_DIR" && sha256sum -c "$CACHE/model-SHA256SUMS")
+  if [ -f "$ROOT/scripts/model.sha256sums" ]; then
+    cmp "$ROOT/scripts/model.sha256sums" "$CACHE/model-SHA256SUMS" || { echo "Model differs from pinned scripts/model.sha256sums" >&2; exit 1; }
+  else
+    echo "NOTE: model checksums are not pinned yet. Copy $CACHE/model-SHA256SUMS to scripts/model.sha256sums and commit it."
+  fi
+  cp "$MODEL_DIR/NOTICE.txt" "$ASSETS/licenses/Tarteel_whisper_NOTICE.txt"
+  du -sh "$MODEL_DIR"
+else
+  echo "WARNING: model release '$MODEL_TAG' not found in $MODEL_REPO. The app still builds but will say the model is missing." >&2
+  echo "         Run the 'Export Tarteel Whisper model' workflow with publish=true." >&2
+  rm -rf "$MODEL_DIR"
+fi
+
 echo "All assets fetched and verified."

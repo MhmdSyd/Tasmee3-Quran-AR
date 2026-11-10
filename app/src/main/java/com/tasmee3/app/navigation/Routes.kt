@@ -6,6 +6,7 @@ object Routes {
     const val PROGRESS = "progress"
     const val SUMMARY = "summary"
     const val SETTINGS = "settings"
+    const val MODEL_TEST = "model_test"
 
-    val all = listOf(READER, LISTENING, PROGRESS, SUMMARY, SETTINGS)
+    val all = listOf(READER, LISTENING, PROGRESS, SUMMARY, SETTINGS, MODEL_TEST)
 }

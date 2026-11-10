@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.tasmee3.app.ui.modeltest.ModelTestScreen
 import com.tasmee3.app.ui.reader.ReaderScreen
 import com.tasmee3.app.ui.screens.PlaceholderScreen
 import com.tasmee3.app.R
@@ -23,7 +24,8 @@ fun TasmeeNavHost(modifier: Modifier = Modifier, startPage: Int = 1) {
         composable(Routes.READER) {
             ReaderScreen(
                 initialPage = startPage,
-                onStartRecitation = { nav.navigate(Routes.LISTENING) }
+                onStartRecitation = { nav.navigate(Routes.LISTENING) },
+                onOpenMenu = { nav.navigate(Routes.MODEL_TEST) }
             )
         }
         composable(Routes.LISTENING) {
@@ -55,6 +57,9 @@ fun TasmeeNavHost(modifier: Modifier = Modifier, startPage: Int = 1) {
                     }
                 )
             )
+        }
+        composable(Routes.MODEL_TEST) {
+            ModelTestScreen(onBack = { nav.popBackStack() })
         }
         composable(Routes.SETTINGS) {
             PlaceholderScreen(
