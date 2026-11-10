@@ -54,6 +54,6 @@ private val Scheme = lightColorScheme(
 @Composable
 fun TasmeeTheme(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        MaterialTheme(colorScheme = Scheme, content = content)
+        MaterialTheme(colorScheme = Scheme, typography = AppTypography, content = content)
     }
 }

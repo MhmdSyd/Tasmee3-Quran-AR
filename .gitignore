@@ -9,3 +9,8 @@ local.properties
 captures/
 .externalNativeBuild/
 .cxx/
+# fetched by scripts/fetch_assets.sh (never committed)
+.assets-cache/
+app/src/main/assets/mushaf/
+app/src/main/assets/licenses/
+app/src/main/res/font/*.ttf

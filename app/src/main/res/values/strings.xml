@@ -21,5 +21,14 @@
     <string name="settings">الإعدادات</string>
     <string name="back">رجوع</string>
 
+    <!-- Added in step 2 (new wording, please review) -->
+    <string name="page_label">الصفحة %1$s · الجزء %2$s</string>
+    <string name="goto_page">الانتقال إلى صفحة</string>
+    <string name="goto_hint">رقم الصفحة من ١ إلى ٦٠٤</string>
+    <string name="go">انتقال</string>
+    <string name="cancel">إلغاء</string>
+    <string name="menu">القائمة</string>
+    <string name="load_failed">تعذّر تحميل بيانات المصحف</string>
+
     <string name="placeholder_note">شاشة مؤقتة — ستُبنى في خطوة لاحقة</string>
 </resources>

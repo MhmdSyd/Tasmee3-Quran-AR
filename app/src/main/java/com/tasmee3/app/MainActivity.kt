@@ -16,13 +16,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // Debug aid: `adb shell am start ... --ei page 503` opens that page (used by the screenshot workflow).
+        val startPage = intent.getIntExtra("page", 1)
         setContent {
             TasmeeTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    TasmeeNavHost(modifier = Modifier.safeDrawingPadding())
+                    TasmeeNavHost(modifier = Modifier.safeDrawingPadding(), startPage = startPage)
                 }
             }
         }

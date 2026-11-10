@@ -1,0 +1,6 @@
+Mushaf page/line layout and per-word text
+Source: https://github.com/zonetecde/mushaf-layout (pinned commit in scripts/fetch_assets.sh)
+The repository declares "license": "ISC" in package.json for its code. It contains no separate license
+file for the dataset. The README says the data is generated from the Quran.com API (api.quran.com) and
+that the text/glyphs come from King Fahd Glorious Quran Printing Complex (QPC) encodings.
+Status: dataset license NOT confirmed. Use for testing builds only until confirmed.

@@ -2,6 +2,9 @@
 
 You only need a web browser and a GitHub account.
 
+## 0. Updating from a previous zip
+Copy the new files over your project folder (keep your own `.git` folder), then in the terminal: `git add .`, `git commit -m "Step 2: Mushaf reader"`, `git push`.
+
 ## 1. Put the code on GitHub
 1. Unzip the project. It already contains a `.git` folder with the commits.
 2. In a terminal inside the folder run:

@@ -23,6 +23,9 @@ jobs:
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
 
+      - name: Fetch fonts and Mushaf data (not stored in git)
+        run: bash scripts/fetch_assets.sh
+
       # Gradle 8.9 is installed here, so no committed wrapper jar is needed yet.
       - uses: gradle/actions/setup-gradle@v4
         with:
