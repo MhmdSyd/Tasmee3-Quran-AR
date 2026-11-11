@@ -2,7 +2,7 @@
 
 Offline Android app for Quran recitation practice (Madani mushaf, Hafs from Asim). Recognition runs fully on the device; no network permission, no analytics.
 
-Spec: see `DEVELOPER_HANDOFF.md`. Status: **step 3 of 7 (speech model)**: model export workflow and an on-device test screen (reader menu icon). Recitation screens are still placeholders.
+Spec: see `DEVELOPER_HANDOFF.md`. Status: **step 4 of 7 (word matcher)** done as a tested module (`docs/MATCHER.md`). Step 3 test screen: reader menu icon. Recitation screens are still placeholders.
 
 ## Assets (fonts and Mushaf data)
 They are not in git. `bash scripts/fetch_assets.sh` downloads and verifies them (CI does this automatically). See `THIRD_PARTY.md` for licenses and open points.
