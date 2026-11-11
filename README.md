@@ -2,7 +2,7 @@
 
 Offline Android app for Quran recitation practice (Madani mushaf, Hafs from Asim). Recognition runs fully on the device; no network permission, no analytics.
 
-Spec: see `DEVELOPER_HANDOFF.md`. Status: **step 5 of 7 (recitation screens)**: the green button on the reader starts a live, fully offline recitation (`docs/TEST_STEP5.md`). Matcher rules: `docs/MATCHER.md`. Summary and settings screens are still basic/placeholder (step 6).
+Spec: see `DEVELOPER_HANDOFF.md`. Status: **step 6 of 7 (summary, settings, storage, icon)**. The green button on the reader starts a live, fully offline recitation (`docs/TEST_STEP5.md`, `docs/TEST_STEP6.md`). Matcher rules: `docs/MATCHER.md`. Last step: signed release build (step 7).
 
 ## Assets (fonts and Mushaf data)
 They are not in git. `bash scripts/fetch_assets.sh` downloads and verifies them (CI does this automatically). See `THIRD_PARTY.md` for licenses and open points.

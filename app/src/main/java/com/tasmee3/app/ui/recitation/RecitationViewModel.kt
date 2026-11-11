@@ -4,6 +4,10 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import android.media.AudioManager
+import android.media.ToneGenerator
+import com.tasmee3.app.data.AppDatabase
+import com.tasmee3.app.data.SessionStore
 import com.tasmee3.app.match.LastSession
 import com.tasmee3.app.match.MatchEvent
 import com.tasmee3.app.match.RecitationSession
@@ -13,6 +17,7 @@ import com.tasmee3.app.mushaf.MushafMeta
 import com.tasmee3.app.mushaf.MushafPage
 import com.tasmee3.app.mushaf.MushafRepository
 import com.tasmee3.app.speech.ModelStatus
+import com.tasmee3.app.settings.SettingsRepository
 import com.tasmee3.app.speech.SpeechPipeline
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -40,6 +45,9 @@ class RecitationViewModel(app: Application, handle: SavedStateHandle) : AndroidV
     private val pageNumber: Int = handle.get<Int>("page") ?: 1
     private val repo = MushafRepository(app)
     private val pipeline = SpeechPipeline(app)
+    private val settingsRepo = SettingsRepository.get(app)
+    private val store = SessionStore(AppDatabase.get(app).sessions())
+    private var tone: ToneGenerator? = null
     private val lock = Any()
     private var session: RecitationSession? = null
     private var autoHintJob: Job? = null
@@ -66,7 +74,9 @@ class RecitationViewModel(app: Application, handle: SavedStateHandle) : AndroidV
             try {
                 val meta = repo.meta()
                 val page = repo.page(pageNumber)
-                val s = RecitationSession(page, meta.basmala)
+                // Reveal mode and "show word after 2nd try" apply to this session; auto hint and sound are read live.
+                val cfg = settingsRepo.settings.value
+                val s = RecitationSession(page, meta.basmala, cfg.matcherConfig(), cfg.revealMode)
                 synchronized(lock) { session = s }
                 _state.update { it.copy(page = page, meta = meta, snapshot = s.snapshot()) }
                 pipeline.load()
@@ -110,6 +120,7 @@ class RecitationViewModel(app: Application, handle: SavedStateHandle) : AndroidV
                 }
             }
             LastSession.result = result
+            if (result != null) runCatching { store.save(result) } // a database problem must never block the summary
             _state.update { it.copy(finished = true) }
         }
     }
@@ -120,7 +131,16 @@ class RecitationViewModel(app: Application, handle: SavedStateHandle) : AndroidV
             s.onSegment(r.text, r.startMs, r.endMs) to s.snapshot()
         }
         _state.update { it.copy(snapshot = snap) }
+        if (events.any { it is MatchEvent.WrongTry }) playErrorSound()
         if (events.any { it is MatchEvent.Completed }) finish()
+    }
+
+    private fun playErrorSound() {
+        if (!settingsRepo.settings.value.errorSound) return
+        runCatching {
+            val t = tone ?: ToneGenerator(AudioManager.STREAM_NOTIFICATION, 60).also { tone = it }
+            t.startTone(ToneGenerator.TONE_PROP_NACK, 150)
+        }
     }
 
     private fun revealHint() {
@@ -137,7 +157,7 @@ class RecitationViewModel(app: Application, handle: SavedStateHandle) : AndroidV
         autoHintJob = viewModelScope.launch {
             while (true) {
                 delay(500)
-                val due = synchronized(lock) {
+                val due = settingsRepo.settings.value.autoHint && synchronized(lock) {
                     session?.shouldAutoHint(
                         pipeline.audioMs, pipeline.lastSpeechMs, pipeline.speaking, pipeline.pending.get(), AUTO_HINT_MS
                     ) == true
@@ -150,6 +170,7 @@ class RecitationViewModel(app: Application, handle: SavedStateHandle) : AndroidV
     override fun onCleared() {
         autoHintJob?.cancel()
         pipeline.release()
+        tone?.release()
         super.onCleared()
     }
 

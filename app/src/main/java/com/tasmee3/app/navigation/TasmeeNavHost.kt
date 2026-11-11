@@ -2,32 +2,28 @@ package com.tasmee3.app.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.tasmee3.app.R
 import com.tasmee3.app.mushaf.MushafRepository
 import com.tasmee3.app.ui.modeltest.ModelTestScreen
 import com.tasmee3.app.ui.reader.ReaderScreen
 import com.tasmee3.app.ui.recitation.RecitationScreen
-import com.tasmee3.app.ui.screens.PlaceholderScreen
+import com.tasmee3.app.ui.settings.SettingsScreen
 import com.tasmee3.app.ui.summary.SummaryScreen
 
 /** Flow: Reader -> Recitation -> Summary -> (Reader | Recitation). Settings opens from the recitation screen. */
 @Composable
 fun TasmeeNavHost(modifier: Modifier = Modifier, startPage: Int = 1) {
     val nav = rememberNavController()
-    val back = stringResource(R.string.back)
-
     NavHost(navController = nav, startDestination = Routes.READER, modifier = modifier) {
         composable(Routes.READER) {
             ReaderScreen(
                 initialPage = startPage,
                 onStartRecitation = { page -> nav.navigate(Routes.recitation(page)) },
-                onOpenMenu = { nav.navigate(Routes.MODEL_TEST) }
+                onOpenMenu = { nav.navigate(Routes.SETTINGS) }
             )
         }
         composable(
@@ -55,9 +51,9 @@ fun TasmeeNavHost(modifier: Modifier = Modifier, startPage: Int = 1) {
             ModelTestScreen(onBack = { nav.popBackStack() })
         }
         composable(Routes.SETTINGS) {
-            PlaceholderScreen(
-                title = stringResource(R.string.settings_title),
-                actions = listOf(back to { nav.popBackStack() })
+            SettingsScreen(
+                onBack = { nav.popBackStack() },
+                onOpenModelTest = { nav.navigate(Routes.MODEL_TEST) }
             )
         }
     }

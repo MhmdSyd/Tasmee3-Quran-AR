@@ -68,5 +68,32 @@
     <string name="reason_long_pause">توقّفتَ قبلها طويلاً</string>
     <string name="reason_hinted">استعنتَ بالتلميح</string>
 
+    <!-- Step 6 settings and summary (new wording, please review) -->
+    <string name="settings_reveal_title">طريقة إظهار الكلمات</string>
+    <string name="reveal_word">كلمة بكلمة</string>
+    <string name="reveal_verse">آية كاملة</string>
+    <string name="reveal_apply_next">يسري تغيير طريقة الإظهار من التسميع التالي.</string>
+    <string name="settings_strictness_title">دقّة التصحيح</string>
+    <string name="strict_letters">الحروف فقط</string>
+    <string name="strict_diacritics">مع التشكيل</string>
+    <string name="strict_note">التصحيح بالتشكيل غير متاح مع النموذج الحالي، ويُحتسب النطق بالحروف فقط.</string>
+    <string name="auto_hint">تلميح تلقائي بعد ٥ ثوانٍ من الصمت</string>
+    <string name="show_after_second">إظهار الكلمة بعد المحاولة الثانية</string>
+    <string name="error_sound">تشغيل صوت عند الخطأ</string>
+    <string name="model_card_title">نموذج التعرّف على التلاوة</string>
+    <string name="model_card_body">مدمج في التطبيق، يعمل دون إنترنت. الحجم نحو %1$s ميجابايت. لا يُرسَل أي صوت خارج جهازك.</string>
+    <string name="riwaya_label">الرواية</string>
+    <string name="riwaya_value">حفص عن عاصم · المصحف المدني</string>
+    <string name="developer_test">اختبار النموذج (للمطوّر)</string>
+    <string name="summary_done">أحسنت! أتممتَ الصفحة %1$s</string>
+    <string name="summary_partial">تسميع جزئي: %1$s من %2$s كلمة</string>
+    <string name="percent_value">٪%1$s</string>
+    <string name="from_first_try">من أول محاولة</string>
+    <string name="stat_words">كلمة</string>
+    <string name="stat_correct">صحيحة</string>
+    <string name="stat_review">للمراجعة</string>
+    <string name="summary_all_good">لا توجد كلمات للمراجعة</string>
+    <string name="review_heard">سمعنا: %1$s</string>
+
     <string name="placeholder_note">شاشة مؤقتة — ستُبنى في خطوة لاحقة</string>
 </resources>

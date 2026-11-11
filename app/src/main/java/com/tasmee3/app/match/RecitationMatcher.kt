@@ -32,7 +32,13 @@ data class MatcherConfig(
     val fuzzy: Boolean = true,                     // forgive small recognition slips (see WordComparer)
 )
 
-data class ReviewItem(val index: Int, val word: ExpectedWord, val reasons: Set<ReviewReason>) {
+data class ReviewItem(
+    val index: Int,
+    val word: ExpectedWord,
+    val reasons: Set<ReviewReason>,
+    /** What the model heard instead when the word was wrong (normalised), else null. */
+    val heard: String? = null,
+) {
     val primaryReason: ReviewReason get() = reasons.minOf { it.ordinal }.let { ReviewReason.entries[it] }
 }
 
@@ -81,6 +87,7 @@ class RecitationMatcher(
     val isComplete: Boolean get() = position >= words.size
 
     private val fails = IntArray(words.size)
+    private val heardWrong = arrayOfNulls<String>(words.size)
     private val reasons = Array(words.size) { sortedSetOf<ReviewReason>() }
     private val revealed = BooleanArray(words.size)
     private var replay = -1
@@ -201,7 +208,7 @@ class RecitationMatcher(
     fun summary(): Summary {
         val review = words.indices
             .filter { revealed[it] && reasons[it].isNotEmpty() }
-            .map { ReviewItem(it, words[it], reasons[it].toSet()) }
+            .map { ReviewItem(it, words[it], reasons[it].toSet(), heardWrong[it]) }
         return Summary(
             total = words.size,
             firstTryCorrect = words.indices.count { isFirstTry(it) },
@@ -252,6 +259,7 @@ class RecitationMatcher(
 
     private fun fail(index: Int, heard: String, events: MutableList<MatchEvent>) {
         fails[index]++
+        heardWrong[index] = heard
         if (fails[index] >= 2 && config.revealAfterSecondFailure) {
             reasons[index].add(ReviewReason.WRONG_WORD)
             reveal(index, events)

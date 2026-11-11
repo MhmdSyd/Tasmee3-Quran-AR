@@ -14,6 +14,7 @@ license texts are copied into the app (`assets/licenses/`).
 | Tarteel whisper-base-ar-quran, converted to ONNX int8 | GitHub Release of this repo, built by `.github/workflows/export-model.yml` | Apache-2.0 (base model openai/whisper-base: MIT). NOTICE shipped inside the release | OK to ship with attribution. Training data is undocumented on the model card. |
 | Cairo font (`cairo.ttf`, UI) | github.com/google/fonts, ofl/cairo | SIL OFL 1.1 | OK |
 | AndroidX / Jetpack Compose / Material 3 / Navigation / Coroutines | Maven | Apache-2.0 | OK |
+| Room 2.6.1 + KSP (build tool) | Maven | Apache-2.0 | OK |
 | Kotlin stdlib | Maven | Apache-2.0 | OK |
 | JUnit 4 / org.json (tests only) | Maven | EPL-1.0 / JSON License | OK (not shipped) |
 

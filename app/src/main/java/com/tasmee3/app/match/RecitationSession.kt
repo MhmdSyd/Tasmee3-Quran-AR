@@ -3,6 +3,9 @@ package com.tasmee3.app.match
 import com.tasmee3.app.mushaf.MushafPage
 import com.tasmee3.app.mushaf.MushafWord
 
+/** Settings choice: reveal each word as it is recited, or a whole verse once it is complete. */
+enum class RevealMode { WORD, VERSE }
+
 /** How one word of the page is drawn during recitation. */
 enum class WordDisplay { HIDDEN, REVEALED, FRESH, ERROR }
 
@@ -56,11 +59,18 @@ class SessionSnapshot(
  * One recitation of one page: the matcher plus everything the screen needs (word states, mistake panel,
  * auto-hint timing). Pure Kotlin. Not thread-safe: call it from one thread or under a lock.
  */
-class RecitationSession(page: MushafPage, basmala: String, config: MatcherConfig = MatcherConfig()) {
+class RecitationSession(
+    page: MushafPage,
+    basmala: String,
+    config: MatcherConfig = MatcherConfig(),
+    private val mode: RevealMode = RevealMode.WORD,
+) {
     val words: List<ExpectedWord> = ExpectedWords.fromPage(page)
     private val matcher = RecitationMatcher(words, config, basmala)
     private val indexByLocation: Map<String, Int> = words.mapIndexed { i, w -> w.id to i }.toMap()
     private var fresh = -1
+    private var freshVerse: String? = null
+    private val verseOf: List<String> = words.map { it.id.substringBeforeLast(':') }
     private var error: ErrorInfo? = null
     private var lastProgressMs = 0L
 
@@ -78,7 +88,7 @@ class RecitationSession(page: MushafPage, basmala: String, config: MatcherConfig
         !isComplete && !speaking && pendingDecodes == 0 && nowMs - maxOf(lastProgressMs, lastSpeechMs) >= afterMs
 
     fun snapshot(): SessionSnapshot {
-        val displays = words.indices.map { i ->
+        val displays = if (mode == RevealMode.VERSE) verseDisplays() else words.indices.map { i ->
             when {
                 error?.index == i -> WordDisplay.ERROR
                 matcher.isRevealed(i) -> if (i == fresh) WordDisplay.FRESH else WordDisplay.REVEALED
@@ -88,11 +98,27 @@ class RecitationSession(page: MushafPage, basmala: String, config: MatcherConfig
         return SessionSnapshot(words.size, matcher.position, displays, indexByLocation, error, isComplete)
     }
 
+    /** A verse shows only when every one of its words on this page has been revealed. */
+    private fun verseDisplays(): List<WordDisplay> {
+        val complete = words.indices.groupBy { verseOf[it] }
+            .filterValues { idx -> idx.all { matcher.isRevealed(it) } }.keys
+        return words.indices.map { i ->
+            when {
+                error?.index == i -> WordDisplay.ERROR
+                verseOf[i] !in complete -> WordDisplay.HIDDEN
+                verseOf[i] == freshVerse -> WordDisplay.FRESH
+                else -> WordDisplay.REVEALED
+            }
+        }
+    }
+
     private fun apply(events: List<MatchEvent>, nowMs: Long) {
         for (e in events) {
             when (e) {
                 is MatchEvent.Revealed -> {
                     fresh = e.index
+                    val verse = verseOf[e.index]
+                    if (words.indices.filter { verseOf[it] == verse }.all { matcher.isRevealed(it) }) freshVerse = verse
                     if ((error?.index ?: Int.MAX_VALUE) <= e.index) error = null
                     lastProgressMs = nowMs
                 }
