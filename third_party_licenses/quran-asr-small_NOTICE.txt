@@ -1,0 +1,4 @@
+Speech model: Abdou/quran-asr-small (https://huggingface.co/Abdou/quran-asr-small), MIT License.
+Used unmodified (model.int8.onnx + tokens.txt) through sherpa-onnx.
+Training data credited by the model author: Tarteel "tlog" dataset (CC-BY-4.0, attribution required: Tarteel AI),
+IqraEval, EveryAyah reciters, Tanzil text. Benchmark: Quran-Lab.

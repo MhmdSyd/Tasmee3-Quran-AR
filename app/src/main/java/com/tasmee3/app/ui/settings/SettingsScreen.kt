@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.dp
 import com.tasmee3.app.R
 import com.tasmee3.app.match.RevealMode
 import com.tasmee3.app.settings.SettingsRepository
-import com.tasmee3.app.speech.SherpaWhisperModel
+import com.tasmee3.app.speech.SherpaCtcModel
 import com.tasmee3.app.ui.theme.Tokens
 import kotlin.math.roundToInt
 
@@ -188,10 +188,10 @@ private fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Un
 /** Size of the bundled model files in MB, or null when they are not in the app. */
 private fun modelSizeMb(context: Context): Int? {
     val assets = context.assets
-    if (!SherpaWhisperModel.isInstalled(assets)) return null
+    if (!SherpaCtcModel.isInstalled(assets)) return null
     var total = 0L
-    for (f in SherpaWhisperModel.REQUIRED_FILES) {
-        val path = "${SherpaWhisperModel.DIR}/$f"
+    for (f in SherpaCtcModel.REQUIRED_FILES) {
+        val path = "${SherpaCtcModel.DIR}/$f"
         total += runCatching { assets.openFd(path).use { it.length } }
             .getOrElse { assets.open(path).use { s -> s.available().toLong() } }
     }

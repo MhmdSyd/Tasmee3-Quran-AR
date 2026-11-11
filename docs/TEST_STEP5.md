@@ -4,7 +4,7 @@ Switch the phone to airplane mode first: everything must still work.
 
 1. Open the app, go to page 1 (Al-Fatiha) and tap the green button. Allow the microphone once.
 2. The page shows grey pills instead of words, the offline badge and the instruction text. The mic ring is green: it is listening.
-3. Recite verse 1, then pause about one second. After a moment (the model needs a few seconds) the words appear in place; the newest word has a green highlight.
+3. Recite verse 1, then pause about one second. After a moment (about a second or less) the words appear in place; the newest word has a green highlight.
 4. Say a wrong word on purpose. The word becomes a red pill and the pink panel shows what was heard. Say it wrong again: the word is shown.
 5. Stay silent for 5 seconds: the next word should be revealed by the automatic hint.
 6. Tap the bulb: it reveals the next word. Tap the mic circle: listening pauses (grey) and resumes.

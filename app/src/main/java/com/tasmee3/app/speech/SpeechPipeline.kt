@@ -65,15 +65,15 @@ class SpeechPipeline(context: Context) {
         private set
     val pending = AtomicInteger(0)
 
-    /** Blocking (loads about 100 MB of model files): call from a background thread. */
+    /** Blocking (loads the 36 MB model): call from a background thread. */
     fun load() {
-        if (!SherpaWhisperModel.isInstalled(assets)) {
+        if (!SherpaCtcModel.isInstalled(assets)) {
             _status.value = ModelStatus.Missing
             return
         }
         try {
             val t0 = System.currentTimeMillis()
-            model = SherpaWhisperModel(assets)
+            model = SherpaCtcModel(assets)
             vad = Vad(
                 assetManager = assets,
                 config = VadModelConfig(
@@ -83,7 +83,7 @@ class SpeechPipeline(context: Context) {
                         minSilenceDuration = 0.6f,   // a pause this long ends a segment
                         minSpeechDuration = 0.25f,
                         windowSize = VAD_WINDOW,
-                        maxSpeechDuration = 25f,     // Whisper reads at most 30 s
+                        maxSpeechDuration = 25f,     // cut very long phrases so recognition stays quick
                     ),
                     sampleRate = SAMPLE_RATE,
                     numThreads = 1,

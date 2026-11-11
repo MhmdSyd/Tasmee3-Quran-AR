@@ -60,33 +60,71 @@ echo "== Speech runtime (sherpa-onnx) and voice-activity model"
 SHERPA_VERSION="2.0.1"
 SHERPA_AAR_SHA256="a8d09d1d32f3eb8520482c6d3d43fae674681c5b050385967c70a3c2c9bf0ee7"
 VAD_SHA256="9e2449e1087496d8d4caba907f23e0bd3f78d91fa552479bb9c23ac09cbb1fd6"
-mkdir -p "$ROOT/app/libs" "$ASSETS/models/whisper"
+mkdir -p "$ROOT/app/libs" "$ASSETS/models"
 fetch "https://github.com/k2-fsa/sherpa-onnx/releases/download/v$SHERPA_VERSION/sherpa-onnx-$SHERPA_VERSION.aar" \
   "$ROOT/app/libs/sherpa-onnx-$SHERPA_VERSION.aar" "$SHERPA_AAR_SHA256"
 fetch "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/silero_vad.onnx" \
   "$ASSETS/models/silero_vad.onnx" "$VAD_SHA256"
 
-echo "== Whisper model (from this repo's GitHub Release, built by the Export workflow)"
-MODEL_REPO="${MODEL_REPO:-MhmdSyd/Tasmee3-Quran-AR}"
-MODEL_TAG="${MODEL_TAG:-model-tarteel-whisper-base-ar-quran-v1}"
-MODEL_URL="https://github.com/$MODEL_REPO/releases/download/$MODEL_TAG"
-MODEL_DIR="$ASSETS/models/whisper"
-if curl -fsSL --retry 2 -o "$CACHE/model-SHA256SUMS" "$MODEL_URL/SHA256SUMS"; then
-  for f in encoder.int8.onnx decoder.int8.onnx tokens.txt NOTICE.txt; do
-    curl -fsSL --retry 3 -o "$MODEL_DIR/$f" "$MODEL_URL/$f"
-  done
-  (cd "$MODEL_DIR" && sha256sum -c "$CACHE/model-SHA256SUMS")
-  if [ -f "$ROOT/scripts/model.sha256sums" ]; then
-    cmp "$ROOT/scripts/model.sha256sums" "$CACHE/model-SHA256SUMS" || { echo "Model differs from pinned scripts/model.sha256sums" >&2; exit 1; }
-  else
-    echo "NOTE: model checksums are not pinned yet. Copy $CACHE/model-SHA256SUMS to scripts/model.sha256sums and commit it."
-  fi
-  cp "$MODEL_DIR/NOTICE.txt" "$ASSETS/licenses/Tarteel_whisper_NOTICE.txt"
-  du -sh "$MODEL_DIR"
-else
-  echo "WARNING: model release '$MODEL_TAG' not found in $MODEL_REPO. The app still builds but will say the model is missing." >&2
-  echo "         Run the 'Export Tarteel Whisper model' workflow with publish=true." >&2
-  rm -rf "$MODEL_DIR"
-fi
+echo "== Quran speech model (Hugging Face, pinned to a commit and verified)"
+# Abdou/quran-asr-small: 33M parameters, 36 MB int8, MIT. For very weak phones use QURAN_MODEL=Abdou/quran-asr-tiny (19 MB, less accurate).
+QURAN_MODEL="${QURAN_MODEL:-Abdou/quran-asr-small}"
+HF_ENDPOINT="${HF_ENDPOINT:-https://huggingface.co}"
+MODEL_DIR="$ASSETS/models/quran-asr"
+rm -rf "$ASSETS/models/whisper"   # old Whisper folder from earlier steps, no longer used
+mkdir -p "$MODEL_DIR"
+export QURAN_MODEL HF_ENDPOINT MODEL_DIR ROOT CACHE
+python3 - <<'PY'
+import hashlib, json, os, pathlib, shutil, sys, urllib.request
+
+repo = os.environ["QURAN_MODEL"]
+endpoint = os.environ["HF_ENDPOINT"]
+out = pathlib.Path(os.environ["MODEL_DIR"])
+root = pathlib.Path(os.environ["ROOT"])
+cache = pathlib.Path(os.environ["CACHE"])
+lock_path = root / "scripts" / "model.lock"
+FILES = ["model.int8.onnx", "tokens.txt"]
+
+
+def get(url):
+    return urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "tasmee3-fetch"}), timeout=300)
+
+
+lock = json.loads(lock_path.read_text()) if lock_path.exists() else None
+if lock and lock["repo"] != repo:
+    sys.exit(f"scripts/model.lock is for {lock['repo']}, not {repo}. Delete the lock file to switch models.")
+rev = os.environ.get("MODEL_REV") or (lock["rev"] if lock else json.load(get(f"{endpoint}/api/models/{repo}"))["sha"])
+tree = {e["path"]: e for e in json.load(get(f"{endpoint}/api/models/{repo}/tree/{rev}"))}
+
+found = {}
+for name in FILES:
+    entry = tree.get(name)
+    if entry is None:
+        sys.exit(f"{repo}@{rev} has no file {name}")
+    dest = out / name
+    with get(f"{endpoint}/{repo}/resolve/{rev}/{name}") as r, open(dest, "wb") as f:
+        shutil.copyfileobj(r, f)
+    data = dest.read_bytes()
+    sha256 = hashlib.sha256(data).hexdigest()
+    if "lfs" in entry:   # large file: Hugging Face publishes its SHA-256
+        if sha256 != entry["lfs"]["oid"]:
+            sys.exit(f"{name}: SHA-256 differs from Hugging Face's ({sha256} vs {entry['lfs']['oid']})")
+    else:                # small file: Hugging Face publishes the git blob id
+        blob = hashlib.sha1(b"blob %d\0" % len(data) + data).hexdigest()
+        if blob != entry["oid"]:
+            sys.exit(f"{name}: git blob id differs from Hugging Face's")
+    if lock and lock["files"].get(name) != sha256:
+        sys.exit(f"{name}: differs from the pinned scripts/model.lock")
+    found[name] = sha256
+    print(f"  {name}: {len(data) / 1048576:.1f} MB sha256 {sha256[:16]}...")
+
+if (out / "model.int8.onnx").stat().st_size < 5 * 1048576:
+    sys.exit("model.int8.onnx is suspiciously small")
+if not lock:
+    new_lock = {"repo": repo, "rev": rev, "files": found}
+    (cache / "model.lock").write_text(json.dumps(new_lock, indent=2) + "\n")
+    print(f"NOTE: model is not pinned yet. Copy {cache}/model.lock to scripts/model.lock and commit it.")
+print(f"model {repo}@{rev[:10]} verified")
+PY
 
 echo "All assets fetched and verified."

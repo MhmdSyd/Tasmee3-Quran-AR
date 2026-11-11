@@ -11,15 +11,14 @@ license texts are copied into the app (`assets/licenses/`).
 | Mushaf page/line layout and per-word text (converted by `tools/build_layout.py`) | github.com/zonetecde/mushaf-layout (QPC1 = 1405 print by default, QPC2 = 1421 print) | Repo code: ISC. **No license for the data.** README says it was generated from the Quran.com API | TEST-ONLY: data license not confirmed |
 | sherpa-onnx 2.0.1 Android AAR (includes ONNX Runtime, MIT), fetched pinned + SHA-256 | github.com/k2-fsa/sherpa-onnx releases | Apache-2.0 (ONNX Runtime: MIT) | OK |
 | Silero VAD model (`silero_vad.onnx`), pinned + SHA-256 | sherpa-onnx `asr-models` release (from github.com/snakers4/silero-vad) | MIT (`third_party_licenses/silero-vad_LICENSE.txt`) | OK |
-| Tarteel whisper-base-ar-quran, converted to ONNX int8 | GitHub Release of this repo, built by `.github/workflows/export-model.yml` | Apache-2.0 (base model openai/whisper-base: MIT). NOTICE shipped inside the release | OK to ship with attribution. Training data is undocumented on the model card. |
+| Abdou/quran-asr-small (`model.int8.onnx`, `tokens.txt`), fetched from Hugging Face pinned + verified | huggingface.co/Abdou/quran-asr-small | MIT. Training data credited by the author includes Tarteel tlog (CC-BY-4.0, attribution: Tarteel AI), IqraEval, EveryAyah, Tanzil. Notice: `third_party_licenses/quran-asr-small_NOTICE.txt` | OK to ship with attribution |
 | Cairo font (`cairo.ttf`, UI) | github.com/google/fonts, ofl/cairo | SIL OFL 1.1 | OK |
 | AndroidX / Jetpack Compose / Material 3 / Navigation / Coroutines | Maven | Apache-2.0 | OK |
 | Room 2.6.1 + KSP (build tool) | Maven | Apache-2.0 | OK |
 | Kotlin stdlib | Maven | Apache-2.0 | OK |
 | JUnit 4 / org.json (tests only) | Maven | EPL-1.0 / JSON License | OK (not shipped) |
 
-Test recitations from EveryAyah are used only in the model export workflow for evaluation and are not stored or shipped.
-
 ## How to swap (decision log)
 - **Font:** change `FONT_*` in `scripts/fetch_assets.sh` to another TTF named `uthmanic_hafs.ttf` (for example Amiri Quran, SIL OFL). No code change.
 - **Layout data:** `LAYOUT=QPC2 bash scripts/fetch_assets.sh` switches edition. A different dataset only needs a new converter producing the same `pNNN.json` files.
+- **Speech model:** `QURAN_MODEL=Abdou/quran-asr-tiny` (19 MB) for weak phones; any other model in the same sherpa-onnx zipformer CTC format only needs `SherpaCtcModel` pointed at its files.
