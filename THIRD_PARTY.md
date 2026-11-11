@@ -18,7 +18,8 @@ license texts are copied into the app (`assets/licenses/`).
 | Kotlin stdlib | Maven | Apache-2.0 | OK |
 | JUnit 4 / org.json (tests only) | Maven | EPL-1.0 / JSON License | OK (not shipped) |
 
+
+
 ## How to swap (decision log)
 - **Font:** change `FONT_*` in `scripts/fetch_assets.sh` to another TTF named `uthmanic_hafs.ttf` (for example Amiri Quran, SIL OFL). No code change.
 - **Layout data:** `LAYOUT=QPC2 bash scripts/fetch_assets.sh` switches edition. A different dataset only needs a new converter producing the same `pNNN.json` files.
-- **Speech model:** `QURAN_MODEL=Abdou/quran-asr-tiny` (19 MB) for weak phones; any other model in the same sherpa-onnx zipformer CTC format only needs `SherpaCtcModel` pointed at its files.
