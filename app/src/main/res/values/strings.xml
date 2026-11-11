@@ -45,5 +45,28 @@
     <string name="clear_results">مسح النتائج</string>
     <string name="mic_denied">لم يُمنح إذن الميكروفون</string>
 
+    <!-- Step 5 recitation screens (new wording, please review) -->
+    <string name="recite_title">تسميع %1$s</string>
+    <string name="page_verses">الصفحة %1$s · الآيات %2$s–%3$s</string>
+    <string name="words_progress">%1$s من %2$s كلمة</string>
+    <string name="offline_badge">يعمل على جهازك دون إنترنت</string>
+    <string name="listen_hint">اقرأ من أول الصفحة، وستظهر كل كلمة عند نطقها صحيحة</string>
+    <string name="error_title">الكلمة غير صحيحة</string>
+    <string name="error_position">الآية %1$s · الكلمة %2$s</string>
+    <string name="error_heard">سمعتُ:</string>
+    <string name="error_retry">أعد قراءة الكلمة. ستظهر لك بعد المحاولة الثانية.</string>
+    <string name="pause_listening">إيقاف مؤقت</string>
+    <string name="resume_listening">متابعة التسميع</string>
+    <string name="mic_permission_needed">نحتاج إذن الميكروفون لبدء التسميع. لا يُرسَل أي صوت خارج جهازك.</string>
+    <string name="allow_mic">السماح بالميكروفون</string>
+    <string name="summary_accuracy">%1$s٪ من أول محاولة</string>
+    <string name="summary_counts">الكلمات: %1$s · صحيحة: %2$s · للمراجعة: %3$s</string>
+    <string name="summary_verse">الآية %1$s</string>
+    <string name="summary_review_title">كلمات تحتاج مراجعة</string>
+    <string name="reason_wrong_word">نُطقت كلمة مختلفة</string>
+    <string name="reason_skipped">تخطّيتَ هذه الكلمة</string>
+    <string name="reason_long_pause">توقّفتَ قبلها طويلاً</string>
+    <string name="reason_hinted">استعنتَ بالتلميح</string>
+
     <string name="placeholder_note">شاشة مؤقتة — ستُبنى في خطوة لاحقة</string>
 </resources>

@@ -34,6 +34,13 @@ jobs:
       - name: Unit tests and debug APK
         run: gradle --no-daemon test assembleDebug
 
+      - name: Offline guarantee (fail if the APK can use the network)
+        run: |
+          AAPT2=$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | sort -V | tail -1)
+          "$AAPT2" dump permissions app/build/outputs/apk/debug/app-debug.apk | tee perms.txt
+          if grep -q "android.permission.INTERNET" perms.txt; then echo "INTERNET permission found: the app must work offline" >&2; exit 1; fi
+          echo "No INTERNET permission. Only the microphone is requested." | tee -a "$GITHUB_STEP_SUMMARY"
+
       - name: APK size report
         run: |
           ls -l app/build/outputs/apk/debug/*.apk | awk '{printf "APK: %.1f MB  %s\n", $5/1048576, $9}' | tee -a "$GITHUB_STEP_SUMMARY"

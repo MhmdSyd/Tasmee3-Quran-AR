@@ -2,60 +2,53 @@ package com.tasmee3.app.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.tasmee3.app.R
+import com.tasmee3.app.mushaf.MushafRepository
 import com.tasmee3.app.ui.modeltest.ModelTestScreen
 import com.tasmee3.app.ui.reader.ReaderScreen
+import com.tasmee3.app.ui.recitation.RecitationScreen
 import com.tasmee3.app.ui.screens.PlaceholderScreen
-import com.tasmee3.app.R
-import androidx.compose.ui.res.stringResource
+import com.tasmee3.app.ui.summary.SummaryScreen
 
-/** Flow: Reader -> Listening -> Progress -> Summary -> (Reader | Listening). Settings from recitation screens. */
+/** Flow: Reader -> Recitation -> Summary -> (Reader | Recitation). Settings opens from the recitation screen. */
 @Composable
 fun TasmeeNavHost(modifier: Modifier = Modifier, startPage: Int = 1) {
     val nav = rememberNavController()
-    val settings = stringResource(R.string.settings)
-    val finish = stringResource(R.string.finish)
-    val repeat = stringResource(R.string.repeat_recitation)
     val back = stringResource(R.string.back)
 
     NavHost(navController = nav, startDestination = Routes.READER, modifier = modifier) {
         composable(Routes.READER) {
             ReaderScreen(
                 initialPage = startPage,
-                onStartRecitation = { nav.navigate(Routes.LISTENING) },
+                onStartRecitation = { page -> nav.navigate(Routes.recitation(page)) },
                 onOpenMenu = { nav.navigate(Routes.MODEL_TEST) }
             )
         }
-        composable(Routes.LISTENING) {
-            PlaceholderScreen(
-                title = stringResource(R.string.listening_title),
-                actions = listOf(
-                    stringResource(R.string.hint) to { nav.navigate(Routes.PROGRESS) },
-                    settings to { nav.navigate(Routes.SETTINGS) },
-                    finish to { nav.navigate(Routes.SUMMARY) }
-                )
-            )
-        }
-        composable(Routes.PROGRESS) {
-            PlaceholderScreen(
-                title = stringResource(R.string.progress_title),
-                actions = listOf(
-                    settings to { nav.navigate(Routes.SETTINGS) },
-                    finish to { nav.navigate(Routes.SUMMARY) }
-                )
+        composable(
+            Routes.RECITATION,
+            arguments = listOf(navArgument("page") { type = NavType.IntType })
+        ) {
+            RecitationScreen(
+                onBack = { nav.popBackStack() },
+                onSettings = { nav.navigate(Routes.SETTINGS) },
+                onFinished = {
+                    nav.navigate(Routes.SUMMARY) { popUpTo(Routes.READER) }
+                }
             )
         }
         composable(Routes.SUMMARY) {
-            PlaceholderScreen(
-                title = stringResource(R.string.summary_title),
-                actions = listOf(
-                    repeat to { nav.navigate(Routes.LISTENING) { popUpTo(Routes.READER) } },
-                    stringResource(R.string.next_page) to {
-                        nav.navigate(Routes.READER) { popUpTo(Routes.READER) { inclusive = true } }
-                    }
-                )
+            SummaryScreen(
+                onRepeat = { page -> nav.navigate(Routes.recitation(page)) { popUpTo(Routes.READER) } },
+                onNext = { page ->
+                    nav.navigate(Routes.recitation(page.coerceAtMost(MushafRepository.PAGE_COUNT))) { popUpTo(Routes.READER) }
+                },
+                onClose = { nav.popBackStack(Routes.READER, inclusive = false) }
             )
         }
         composable(Routes.MODEL_TEST) {

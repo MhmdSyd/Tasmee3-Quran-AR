@@ -10,7 +10,7 @@ data class ExpectedWord(val id: String, val text: String, val verseStart: Boolea
 /** Why a word is in the review list. Declared in priority order (first = shown in the summary). */
 enum class ReviewReason { WRONG_WORD, SKIPPED, LONG_PAUSE, HINTED }
 
-enum class IgnoreKind { REPEAT, RESTART }
+enum class IgnoreKind { REPEAT, RESTART, BASMALA }
 
 sealed interface MatchEvent {
     /** A word became visible. [firstTry] is true only if it needed no help and no retry. */
@@ -67,7 +67,15 @@ object ExpectedWords {
  * A "try" is one segment: at most one failed try is counted per segment, so one garbage segment can never
  * reveal several words.
  */
-class RecitationMatcher(val words: List<ExpectedWord>, private val config: MatcherConfig = MatcherConfig()) {
+class RecitationMatcher(
+    val words: List<ExpectedWord>,
+    private val config: MatcherConfig = MatcherConfig(),
+    basmala: String = "",
+) {
+    /** Normalised basmala words. Said before the first verse of a surah (not Al-Fatiha, not At-Tawbah) they are ignored. */
+    private val opening = ArabicNormalizer.words(basmala)
+    private var openingPos = -1
+
     var position = 0
         private set
     val isComplete: Boolean get() = position >= words.size
@@ -101,6 +109,17 @@ class RecitationMatcher(val words: List<ExpectedWord>, private val config: Match
         while (i < heard.size && !isComplete) {
             val h = heard[i]
 
+            if (openingPos >= 0) {
+                if (WordComparer.matches(opening[openingPos], h, config.fuzzy)) {
+                    openingPos++
+                    events.add(MatchEvent.Ignored(h, IgnoreKind.BASMALA))
+                    if (openingPos >= opening.size) openingPos = -1
+                    i++
+                    continue
+                }
+                openingPos = -1
+            }
+
             if (replay >= 0) {
                 if (WordComparer.matches(words[replay].normalized, h, config.fuzzy)) {
                     replay++
@@ -124,6 +143,13 @@ class RecitationMatcher(val words: List<ExpectedWord>, private val config: Match
                 applyPause()
                 accept(position, events)
                 i += 2
+                continue
+            }
+            if (basmalaAllowedHere() && WordComparer.matches(opening[0], h, config.fuzzy)) {
+                openingPos = 1
+                events.add(MatchEvent.Ignored(h, IgnoreKind.BASMALA))
+                if (openingPos >= opening.size) openingPos = -1
+                i++
                 continue
             }
             // Saying the previous word again is far more likely a stutter than a skip that lands on the same word.
@@ -183,6 +209,12 @@ class RecitationMatcher(val words: List<ExpectedWord>, private val config: Match
             notRecited = words.size - position,
             completed = isComplete,
         )
+    }
+
+    private fun basmalaAllowedHere(): Boolean {
+        if (opening.isEmpty() || isComplete) return false
+        val id = words[position].id
+        return id.endsWith(":1:1") && !id.startsWith("1:") && !id.startsWith("9:")
     }
 
     private fun lookaheadSkip(heard: String): Int {

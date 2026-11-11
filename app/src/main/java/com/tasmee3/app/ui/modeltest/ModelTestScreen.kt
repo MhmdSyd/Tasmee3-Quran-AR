@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tasmee3.app.R
+import com.tasmee3.app.speech.ModelStatus
 import com.tasmee3.app.ui.theme.Tokens
 import java.util.Locale
 

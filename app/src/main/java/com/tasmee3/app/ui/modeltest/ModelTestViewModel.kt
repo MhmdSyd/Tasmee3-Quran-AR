@@ -7,6 +7,7 @@ import com.k2fsa.sherpa.onnx.SileroVadModelConfig
 import com.k2fsa.sherpa.onnx.Vad
 import com.k2fsa.sherpa.onnx.VadModelConfig
 import com.tasmee3.app.speech.FrameBuffer
+import com.tasmee3.app.speech.ModelStatus
 import com.tasmee3.app.speech.MicRecorder
 import com.tasmee3.app.speech.SherpaWhisperModel
 import com.tasmee3.app.speech.SpeechModel
@@ -24,13 +25,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
 import kotlin.math.abs
-
-sealed interface ModelStatus {
-    data object Loading : ModelStatus
-    data object Missing : ModelStatus
-    data class Ready(val loadMillis: Long) : ModelStatus
-    data class Failed(val message: String) : ModelStatus
-}
 
 data class Segment(val text: String, val audioSeconds: Float, val decodeMillis: Long)
 

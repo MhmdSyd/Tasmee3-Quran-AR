@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextMeasurer
@@ -29,8 +31,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import com.tasmee3.app.match.AllRevealed
+import com.tasmee3.app.match.WordDisplay
+import com.tasmee3.app.match.WordDisplays
 import com.tasmee3.app.mushaf.ArabicDigits
 import com.tasmee3.app.mushaf.LineFitter
 import com.tasmee3.app.mushaf.MushafLine
@@ -43,11 +49,16 @@ import com.tasmee3.app.ui.theme.UthmanicHafs
 
 private const val REF_PX = 100f
 
-private data class LinePlan(val sizePx: Float, val centered: Boolean)
+private class LinePlan(val sizePx: Float, val centered: Boolean, val widthsPx: FloatArray = FloatArray(0))
 
 /** One mushaf page in the double gold frame. Lines come from data; text never wraps. */
 @Composable
-fun MushafPageCard(page: MushafPage?, meta: MushafMeta?, modifier: Modifier = Modifier) {
+fun MushafPageCard(
+    page: MushafPage?,
+    meta: MushafMeta?,
+    modifier: Modifier = Modifier,
+    displays: WordDisplays = AllRevealed,
+) {
     val outer = RoundedCornerShape(14.dp)
     val inner = RoundedCornerShape(10.dp)
     Box(
@@ -59,12 +70,12 @@ fun MushafPageCard(page: MushafPage?, meta: MushafMeta?, modifier: Modifier = Mo
             .border(1.dp, Tokens.GoldLight, inner)
             .padding(horizontal = 10.dp, vertical = 8.dp)
     ) {
-        if (page != null && meta != null) PageLines(page, meta)
+        if (page != null && meta != null) PageLines(page, meta, displays)
     }
 }
 
 @Composable
-private fun PageLines(page: MushafPage, meta: MushafMeta) {
+private fun PageLines(page: MushafPage, meta: MushafMeta, displays: WordDisplays) {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val basmala = remember(meta) { meta.basmala.split(' ').map { MushafWord("", it, 0) } }
@@ -80,8 +91,8 @@ private fun PageLines(page: MushafPage, meta: MushafMeta) {
                 Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                     when (line) {
                         is MushafLine.SurahHeader -> HeaderBanner(line.text, plans[i].sizePx, density)
-                        is MushafLine.Basmala -> WordsRow(basmala, plans[i], density)
-                        is MushafLine.Words -> WordsRow(line.words, plans[i], density)
+                        is MushafLine.Basmala -> WordsRow(basmala, plans[i], AllRevealed, density)
+                        is MushafLine.Words -> WordsRow(line.words, plans[i], displays, density)
                     }
                 }
             }
@@ -112,7 +123,9 @@ private fun planLine(
     val fit = LineFitter.fitSize(availPx, wordsWidth, REF_PX, words.size, marks)
     val size = minOf(maxSizePx, fit)
     val natural = size * LineFitter.emWidth(wordsWidth, REF_PX, words.size, marks)
-    return LinePlan(size, LineFitter.isCentered(natural, availPx))
+    // Width of every word at the chosen size, so hidden pills take exactly the room the word will take.
+    val widths = FloatArray(words.size) { k -> if (words[k].isSpoken) width(words[k].text) * size / REF_PX else 0f }
+    return LinePlan(size, LineFitter.isCentered(natural, availPx), widths)
 }
 
 @Composable
@@ -138,11 +151,12 @@ private fun HeaderBanner(text: String, sizePx: Float, density: Density) {
 }
 
 @Composable
-private fun WordsRow(words: List<MushafWord>, plan: LinePlan, density: Density) {
+private fun WordsRow(words: List<MushafWord>, plan: LinePlan, displays: WordDisplays, density: Density) {
     val sizeSp = with(density) { plan.sizePx.toSp() }
     val markDp = with(density) { (plan.sizePx * LineFitter.MARK_EM).toDp() }
     val gapDp = with(density) { (plan.sizePx * 0.4f).toDp() }
     val tinyDp = with(density) { (plan.sizePx * 0.1f).toDp() }
+    val pillHeight = with(density) { (plan.sizePx * 0.62f).toDp() }
     Row(
         modifier = Modifier.fillMaxWidth().wrapContentHeight(unbounded = true),
         horizontalArrangement = if (plan.centered) {
@@ -152,37 +166,67 @@ private fun WordsRow(words: List<MushafWord>, plan: LinePlan, density: Density) 
         },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        for (w in words) {
+        words.forEachIndexed { k, w ->
             // Keep a word and its verse mark together so justification never separates them.
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (w.isSpoken) WordText(w.text, sizeSp)
+                if (w.isSpoken) {
+                    val widthDp = with(density) { plan.widthsPx.getOrElse(k) { 0f }.toDp() }
+                    WordCell(w.text, displays.display(w), sizeSp, widthDp, pillHeight)
+                }
                 if (w.isSpoken && w.verseEnd > 0) Spacer(Modifier.width(tinyDp))
-                if (w.verseEnd > 0) VerseMark(w.verseEnd, markDp, plan.sizePx, density)
+                if (w.verseEnd > 0) VerseMark(w.verseEnd, markDp, plan.sizePx, density, displays.markVisible(w))
             }
         }
     }
 }
 
 @Composable
-private fun WordText(text: String, size: TextUnit) {
+private fun WordCell(text: String, display: WordDisplay, size: TextUnit, widthDp: Dp, pillHeight: Dp) {
+    when (display) {
+        WordDisplay.REVEALED -> WordText(text, size, Modifier)
+        WordDisplay.FRESH -> WordText(
+            text, size,
+            Modifier.background(Tokens.GreenFresh, RoundedCornerShape(6.dp)).padding(horizontal = 2.dp),
+            color = Tokens.GreenDark
+        )
+        WordDisplay.HIDDEN -> Box(
+            Modifier.width(widthDp).height(pillHeight).background(Tokens.HiddenPill, RoundedCornerShape(50))
+        )
+        // Not colour alone: a thick outline plus the mistake panel under the page.
+        WordDisplay.ERROR -> Box(
+            Modifier.width(widthDp).height(pillHeight)
+                .background(Tokens.ErrorPill, RoundedCornerShape(50))
+                .border(2.dp, Tokens.Error, RoundedCornerShape(50))
+        )
+    }
+}
+
+@Composable
+private fun WordText(
+    text: String,
+    size: TextUnit,
+    modifier: Modifier,
+    color: androidx.compose.ui.graphics.Color = Tokens.Ink,
+) {
     Text(
         text = text,
+        modifier = modifier,
         fontFamily = UthmanicHafs,
         fontSize = size,
-        color = Tokens.Ink,
+        color = color,
         maxLines = 1,
         softWrap = false
     )
 }
 
 @Composable
-private fun VerseMark(number: Int, widthDp: androidx.compose.ui.unit.Dp, sizePx: Float, density: Density) {
+private fun VerseMark(number: Int, widthDp: Dp, sizePx: Float, density: Density, visible: Boolean) {
     Box(Modifier.width(widthDp), contentAlignment = Alignment.Center) {
         Box(
-            Modifier.size(widthDp * 0.88f).border(1.dp, Tokens.Gold, CircleShape),
+            Modifier.size(widthDp * 0.88f).alpha(if (visible) 1f else 0.45f).border(1.dp, Tokens.Gold, CircleShape),
             contentAlignment = Alignment.Center
         ) {
-            Text(
+            if (visible) Text(
                 text = ArabicDigits.fromInt(number),
                 fontFamily = Cairo,
                 fontWeight = FontWeight.Medium,

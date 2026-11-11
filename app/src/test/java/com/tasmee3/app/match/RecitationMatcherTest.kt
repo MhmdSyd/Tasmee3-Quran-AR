@@ -257,3 +257,56 @@ class RecitationMatcherTest {
         assertEquals(0.25, s.accuracy, 1e-9)
     }
 }
+
+class RecitationMatcherBasmalaTest {
+    private val basmala = "بسم الله الرحمن الرحيم"
+    private fun words(vararg texts: String, first: String = "2:1:") =
+        texts.mapIndexed { i, t -> ExpectedWord("$first${i + 1}", t, i == 0) }
+
+    private fun surahStartAt(id: String) = RecitationMatcher(
+        listOf(ExpectedWord(id, "كتاب", true), ExpectedWord(id.dropLast(1) + "2", "قلم")), basmala = basmala
+    )
+
+    @Test
+    fun basmalaBeforeASurahStartIsIgnoredAndCostsNothing() {
+        val m = surahStartAt("2:1:1")
+        val events = m.onSegment("بسم الله الرحمن الرحيم كتاب قلم", 0, 5000)
+        assertEquals(4, events.filterIsInstance<MatchEvent.Ignored>().size)
+        assertTrue(events.filterIsInstance<MatchEvent.Ignored>().all { it.kind == IgnoreKind.BASMALA })
+        assertEquals(2, events.filterIsInstance<MatchEvent.Revealed>().size)
+        assertEquals(1.0, m.summary().accuracy, 0.0)
+    }
+
+    @Test
+    fun basmalaIsStillOptional() {
+        val m = surahStartAt("2:1:1")
+        m.onSegment("كتاب قلم", 0, 3000)
+        assertEquals(1.0, m.summary().accuracy, 0.0)
+    }
+
+    @Test
+    fun basmalaIsNotIgnoredInTheMiddleOfASurah() {
+        val m = RecitationMatcher(words("كتاب", "قلم", first = "2:5:"), basmala = basmala)
+        val events = m.onSegment("بسم", 0, 1000)
+        assertTrue(events.single() is MatchEvent.WrongTry)
+    }
+
+    @Test
+    fun alFatihaBasmalaIsARealVerseNotIgnored() {
+        val m = RecitationMatcher(
+            listOf("بسم", "الله", "الرحمن", "الرحيم").mapIndexed { i, t -> ExpectedWord("1:1:${i + 1}", t, i == 0) },
+            basmala = basmala
+        )
+        val events = m.onSegment("بسم الله الرحمن الرحيم", 0, 4000)
+        assertEquals(0, events.filterIsInstance<MatchEvent.Ignored>().size)
+        assertEquals(4, events.filterIsInstance<MatchEvent.Revealed>().size)
+    }
+
+    @Test
+    fun partialBasmalaThenTextStillWorks() {
+        val m = surahStartAt("3:1:1")
+        val events = m.onSegment("بسم الله كتاب قلم", 0, 4000)
+        assertEquals(2, events.filterIsInstance<MatchEvent.Ignored>().size)
+        assertEquals(2, events.filterIsInstance<MatchEvent.Revealed>().size)
+    }
+}

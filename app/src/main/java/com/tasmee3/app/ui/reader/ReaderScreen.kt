@@ -55,7 +55,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ReaderScreen(
     initialPage: Int,
-    onStartRecitation: () -> Unit,
+    onStartRecitation: (Int) -> Unit,
     onOpenMenu: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -103,7 +103,7 @@ fun ReaderScreen(
             canGoNext = pager.currentPage < MushafRepository.PAGE_COUNT - 1,
             onPrevious = { scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } },
             onNext = { scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } },
-            onStart = onStartRecitation,
+            onStart = { onStartRecitation(pager.currentPage + 1) },
         )
     }
 
