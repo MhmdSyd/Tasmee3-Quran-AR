@@ -40,6 +40,8 @@ class SpeechPipeline(context: Context) {
     interface Listener {
         fun onAudio(level: Float, speaking: Boolean, audioMs: Long)
         fun onRecognized(result: Recognized)
+        /** Live guess for the phrase being spoken right now (it keeps changing until the phrase ends). */
+        fun onPartial(text: String, utteranceStartMs: Long, audioMs: Long)
         fun onError(message: String)
     }
 
@@ -53,6 +55,9 @@ class SpeechPipeline(context: Context) {
     private var job: Job? = null
     private var sessionOffsetMs = 0L
     private val frames = FrameBuffer(VAD_WINDOW)
+    private val tracker = UtteranceTracker(SAMPLE_RATE)
+    private val partialBusy = java.util.concurrent.atomic.AtomicBoolean(false)
+    private var lastPartialMs = 0L
 
     private val decodeExecutor = Executors.newSingleThreadExecutor()
     private val decodeScope = CoroutineScope(SupervisorJob() + decodeExecutor.asCoroutineDispatcher())
@@ -101,6 +106,7 @@ class SpeechPipeline(context: Context) {
         this.listener = listener
         sessionOffsetMs = audioMs
         frames.clear()
+        tracker.reset()
         v.reset()
         job = scope.launch(Dispatchers.Default) {
             try {
@@ -111,7 +117,14 @@ class SpeechPipeline(context: Context) {
                     for (frame in frames.push(chunk)) v.acceptWaveform(frame)
                     speaking = v.isSpeechDetected()
                     if (speaking) lastSpeechMs = audioMs
-                    drain(v)
+                    tracker.push(chunk, speaking, audioMs)
+                    if (drain(v) > 0) {
+                        tracker.reset()               // the phrase ended: its final result is on the way
+                    } else if (tracker.active && audioMs - lastSpeechMs > ABANDON_MS) {
+                        tracker.reset()               // noise burst that never became speech
+                    } else {
+                        maybeDecodePartial(listener)
+                    }
                     listener.onAudio(minOf(1f, peak * 3f), speaking, audioMs)
                 }
             } catch (e: CancellationException) {
@@ -133,6 +146,7 @@ class SpeechPipeline(context: Context) {
             v.reset()
         }
         frames.clear()
+        tracker.reset()
         speaking = false
     }
 
@@ -153,11 +167,40 @@ class SpeechPipeline(context: Context) {
         runCatching { model?.close() }
     }
 
-    private fun drain(v: Vad) {
+    private fun drain(v: Vad): Int {
+        var n = 0
         while (!v.empty()) {
             val segment = v.front()
             v.pop()
             enqueue(segment)
+            n++
+        }
+        return n
+    }
+
+    /**
+     * Streaming: while the reciter is still talking, recognize everything said so far every few hundred ms and
+     * report it as a partial result. One partial at a time; if recognition is busy the next one is skipped.
+     */
+    private fun maybeDecodePartial(l: Listener) {
+        val m = model ?: return
+        if (!tracker.active || tracker.lengthMs < MIN_PARTIAL_MS) return
+        if (audioMs - lastPartialMs < PARTIAL_EVERY_MS) return
+        if (!partialBusy.compareAndSet(false, true)) return
+        lastPartialMs = audioMs
+        val audio = tracker.audio()
+        val utteranceStart = tracker.startMs
+        val now = audioMs
+        decodeScope.launch {
+            try {
+                m.reset()
+                m.accept(audio)
+                l.onPartial(m.result(), utteranceStart, now)
+            } catch (e: Throwable) {
+                // a failed live guess is not an error for the user; the final result still comes
+            } finally {
+                partialBusy.set(false)
+            }
         }
     }
 
@@ -189,5 +232,8 @@ class SpeechPipeline(context: Context) {
     companion object {
         const val SAMPLE_RATE = 16_000
         const val VAD_WINDOW = 512
+        const val PARTIAL_EVERY_MS = 350L   // how often the live guess is refreshed
+        const val MIN_PARTIAL_MS = 450L     // do not guess on less audio than this
+        const val ABANDON_MS = 1_500L       // drop a phrase the voice detector never confirmed
     }
 }

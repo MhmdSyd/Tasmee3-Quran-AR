@@ -44,6 +44,8 @@ class ModelTestViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
 
+        override fun onPartial(text: String, utteranceStartMs: Long, audioMs: Long) = Unit
+
         override fun onError(message: String) {
             _state.update { it.copy(error = message) }
         }

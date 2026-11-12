@@ -4,7 +4,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LAYOUT="${LAYOUT:-QPC1}"   # QPC1 = 1405 Madani print, QPC2 = 1421 Madani print (565 pages break lines differently)
+# Layout: Mushaf Al Madinah V1 (1405H print), the 604-page, 15-line Madani mushaf. No other edition is selectable.
+LAYOUT="QPC1"   # name of this edition in the zonetecde/mushaf-layout dataset (same data as QUL layout 2)
 
 LAYOUT_REPO="zonetecde/mushaf-layout"
 LAYOUT_COMMIT="421e9eaa991897ecd50d7abb79160651a45976d3"
@@ -14,11 +15,7 @@ FONT_SHA256="a0636e68e375af9552470d67773936f54d536e6586ce2608311b2fe7f9cbec3a"
 CAIRO_COMMIT="5bb28733cec313b63fbd415b574b5ae35c8aa8b8"
 CAIRO_SHA256="667c987182391c91f4e57a2f455b1794fb5e3ee6ca4ef3383e86bb690fa9c964"
 OFL_SHA256="a4554e1799d42e1405924b61eb0e0722ae1623b1f1f07f995348f96c496362a9"
-case "$LAYOUT" in
-  QPC1) OUT_SHA256="95e0269a774ac0a1f957ef1144726a7b432c622630dd62d268cf811d667e04e0" ;;
-  QPC2) OUT_SHA256="3725724beedcaff5918e66dd7810933649dbb9429cbcdddc2d6ec024aa5a6631" ;;
-  *) echo "LAYOUT must be QPC1 or QPC2" >&2; exit 1 ;;
-esac
+OUT_SHA256="95e0269a774ac0a1f957ef1144726a7b432c622630dd62d268cf811d667e04e0"
 
 CACHE="$ROOT/.assets-cache"
 ASSETS="$ROOT/app/src/main/assets"

@@ -27,3 +27,17 @@ class ExpectedWordsTest {
         assertTrue(words[2].verseStart)
     }
 }
+
+class FirstVerseTest {
+    @Test
+    fun firstVerseUsesTheFirstSpokenWordIgnoringMarkOnlyTokens() {
+        val page = MushafPage(
+            number = 132, surah = 6, juz = 7,
+            lines = listOf(
+                MushafLine.Words(1, listOf(MushafWord("6:35:30", "", 35), MushafWord("6:36:1", "كلمة", 0)))
+            )
+        )
+        assertEquals(6 to 36, page.firstVerse())
+        assertEquals(null, MushafPage(1, 1, 1, emptyList()).firstVerse())
+    }
+}

@@ -73,13 +73,36 @@ class RecitationSession(
     private val verseOf: List<String> = words.map { it.id.substringBeforeLast(':') }
     private var error: ErrorInfo? = null
     private var lastProgressMs = 0L
+    private var tentative = 0               // words confirmed by a partial result, not yet final
+    private var lastFinalEndMs = Long.MIN_VALUE
 
     val isComplete: Boolean get() = matcher.isComplete
 
-    fun onSegment(text: String, startMs: Long, endMs: Long): List<MatchEvent> =
-        matcher.onSegment(text, startMs, endMs).also { apply(it, endMs) }
+    /** The final result of a phrase (after a pause). Replaces any live preview of that phrase. */
+    fun onSegment(text: String, startMs: Long, endMs: Long): List<MatchEvent> {
+        tentative = 0
+        lastFinalEndMs = endMs
+        return matcher.onSegment(text, startMs, endMs).also { apply(it, endMs) }
+    }
 
-    fun hint(nowMs: Long): List<MatchEvent> = matcher.hint().also { apply(it, nowMs) }
+    /**
+     * A partial result while the reciter is still speaking: reveals matched words right away (streaming).
+     * Only reveals; mistakes are judged on the final result. Reveals never shrink within a phrase.
+     * Returns true if the picture changed. A late partial of a phrase that is already final is ignored.
+     */
+    fun onPartial(text: String, utteranceStartMs: Long, nowMs: Long): Boolean {
+        if (isComplete || utteranceStartMs <= lastFinalEndMs) return false
+        val k = matcher.previewCount(text)
+        if (k <= tentative) return false
+        tentative = k
+        lastProgressMs = nowMs
+        return true
+    }
+
+    fun hint(nowMs: Long): List<MatchEvent> {
+        if (tentative > 0) tentative-- // the hinted word was the first previewed one: it is real now
+        return matcher.hint().also { apply(it, nowMs) }
+    }
 
     fun summary(): Summary = matcher.summary()
 
@@ -88,25 +111,29 @@ class RecitationSession(
         !isComplete && !speaking && pendingDecodes == 0 && nowMs - maxOf(lastProgressMs, lastSpeechMs) >= afterMs
 
     fun snapshot(): SessionSnapshot {
-        val displays = if (mode == RevealMode.VERSE) verseDisplays() else words.indices.map { i ->
+        val shownUpTo = matcher.position + tentative          // words before this index are shown
+        val activeError = error?.takeIf { it.index >= shownUpTo }
+        val freshIndex = if (tentative > 0) shownUpTo - 1 else fresh
+        val displays = if (mode == RevealMode.VERSE) verseDisplays(shownUpTo, activeError) else words.indices.map { i ->
             when {
-                error?.index == i -> WordDisplay.ERROR
-                matcher.isRevealed(i) -> if (i == fresh) WordDisplay.FRESH else WordDisplay.REVEALED
+                activeError?.index == i -> WordDisplay.ERROR
+                i < shownUpTo -> if (i == freshIndex) WordDisplay.FRESH else WordDisplay.REVEALED
                 else -> WordDisplay.HIDDEN
             }
         }
-        return SessionSnapshot(words.size, matcher.position, displays, indexByLocation, error, isComplete)
+        return SessionSnapshot(words.size, shownUpTo, displays, indexByLocation, activeError, isComplete)
     }
 
     /** A verse shows only when every one of its words on this page has been revealed. */
-    private fun verseDisplays(): List<WordDisplay> {
+    private fun verseDisplays(shownUpTo: Int, activeError: ErrorInfo?): List<WordDisplay> {
         val complete = words.indices.groupBy { verseOf[it] }
-            .filterValues { idx -> idx.all { matcher.isRevealed(it) } }.keys
+            .filterValues { idx -> idx.all { it < shownUpTo } }.keys
+        val freshKey = if (tentative > 0) verseOf[shownUpTo - 1] else freshVerse
         return words.indices.map { i ->
             when {
-                error?.index == i -> WordDisplay.ERROR
+                activeError?.index == i -> WordDisplay.ERROR
                 verseOf[i] !in complete -> WordDisplay.HIDDEN
-                verseOf[i] == freshVerse -> WordDisplay.FRESH
+                verseOf[i] == freshKey -> WordDisplay.FRESH
                 else -> WordDisplay.REVEALED
             }
         }

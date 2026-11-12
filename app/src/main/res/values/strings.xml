@@ -45,6 +45,10 @@
     <string name="clear_results">مسح النتائج</string>
     <string name="mic_denied">لم يُمنح إذن الميكروفون</string>
 
+    <!-- Mushaf screen restyle (new wording, please review) -->
+    <string name="page_info">صفحة %1$s | جزء %2$s</string>
+    <string name="start_recitation_cd">ابدأ التسميع</string>
+
     <!-- Step 5 recitation screens (new wording, please review) -->
     <string name="recite_title">تسميع %1$s</string>
     <string name="page_verses">الصفحة %1$s · الآيات %2$s–%3$s</string>

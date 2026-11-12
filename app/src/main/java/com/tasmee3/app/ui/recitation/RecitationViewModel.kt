@@ -36,6 +36,7 @@ data class RecitationUiState(
     val listening: Boolean = false,
     val speaking: Boolean = false,
     val levels: List<Float> = emptyList(),
+    val elapsedMs: Long = 0,
     val error: String? = null,
     val finished: Boolean = false,
 )
@@ -58,10 +59,14 @@ class RecitationViewModel(app: Application, handle: SavedStateHandle) : AndroidV
 
     private val listener = object : SpeechPipeline.Listener {
         override fun onAudio(level: Float, speaking: Boolean, audioMs: Long) {
-            _state.update { it.copy(levels = (it.levels + level).takeLast(WAVE_BARS), speaking = speaking) }
+            _state.update {
+                it.copy(levels = (it.levels + level).takeLast(WAVE_BARS), speaking = speaking, elapsedMs = audioMs)
+            }
         }
 
         override fun onRecognized(result: SpeechPipeline.Recognized) = handleRecognized(result)
+
+        override fun onPartial(text: String, utteranceStartMs: Long, audioMs: Long) = handlePartial(text, utteranceStartMs, audioMs)
 
         override fun onError(message: String) {
             _state.update { it.copy(error = message) }
@@ -123,6 +128,16 @@ class RecitationViewModel(app: Application, handle: SavedStateHandle) : AndroidV
             if (result != null) runCatching { store.save(result) } // a database problem must never block the summary
             _state.update { it.copy(finished = true) }
         }
+    }
+
+    /** Live guess while the reciter is still speaking: reveal matched words right away (streaming). */
+    private fun handlePartial(text: String, utteranceStartMs: Long, audioMs: Long) {
+        val snap = synchronized(lock) {
+            val s = session ?: return
+            if (!s.onPartial(text, utteranceStartMs, audioMs)) return
+            s.snapshot()
+        }
+        _state.update { it.copy(snapshot = snap) }
     }
 
     private fun handleRecognized(r: SpeechPipeline.Recognized) {

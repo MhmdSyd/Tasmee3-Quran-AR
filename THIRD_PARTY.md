@@ -8,7 +8,7 @@ license texts are copied into the app (`assets/licenses/`).
 | Asset | Source (pinned in the script) | License | Status |
 |---|---|---|---|
 | KFGQPC Uthmanic Script HAFS v0.18 font (`uthmanic_hafs.ttf`, unmodified) | github.com/thetruetruth/quran-data-kfgqpc | KFGQPC EULA embedded in the font: free of cost to use, copy and distribute; the font cannot be sold, modified, altered, translated, reverse engineered or "reproduced" (same text also forbids "Reproduced", which conflicts with "Copy"). Full text: `third_party_licenses/KFGQPC_EULA.txt` | TEST-ONLY: wording is ambiguous; ask KFGQPC for written confirmation before a public release. Never modify or subset the font. |
-| Mushaf page/line layout and per-word text (converted by `tools/build_layout.py`) | github.com/zonetecde/mushaf-layout (QPC1 = 1405 print by default, QPC2 = 1421 print) | Repo code: ISC. **No license for the data.** README says it was generated from the Quran.com API | TEST-ONLY: data license not confirmed |
+| Mushaf page/line layout and per-word text (converted by `tools/build_layout.py`) | github.com/zonetecde/mushaf-layout, folder QPC1 = Mushaf Al Madinah V1 (1405H print). Checked against QUL layout 2 (qul.tarteel.ai/mushaf_layouts/2): the verse range of 20 spread pages is identical, and page 132 matches a screenshot of the Tarteel app line by line | Repo code: ISC. **No license for the data.** README says it was generated from the Quran.com API | TEST-ONLY: data license not confirmed |
 | sherpa-onnx 2.0.1 Android AAR (includes ONNX Runtime, MIT), fetched pinned + SHA-256 | github.com/k2-fsa/sherpa-onnx releases | Apache-2.0 (ONNX Runtime: MIT) | OK |
 | Silero VAD model (`silero_vad.onnx`), pinned + SHA-256 | sherpa-onnx `asr-models` release (from github.com/snakers4/silero-vad) | MIT (`third_party_licenses/silero-vad_LICENSE.txt`) | OK |
 | Abdou/quran-asr-small (`model.int8.onnx`, `tokens.txt`), fetched from Hugging Face pinned + verified | huggingface.co/Abdou/quran-asr-small | MIT. Training data credited by the author includes Tarteel tlog (CC-BY-4.0, attribution: Tarteel AI), IqraEval, EveryAyah, Tanzil. Notice: `third_party_licenses/quran-asr-small_NOTICE.txt` | OK to ship with attribution |
@@ -22,4 +22,4 @@ license texts are copied into the app (`assets/licenses/`).
 
 ## How to swap (decision log)
 - **Font:** change `FONT_*` in `scripts/fetch_assets.sh` to another TTF named `uthmanic_hafs.ttf` (for example Amiri Quran, SIL OFL). No code change.
-- **Layout data:** `LAYOUT=QPC2 bash scripts/fetch_assets.sh` switches edition. A different dataset only needs a new converter producing the same `pNNN.json` files.
+- **Layout data:** a different source (for example the official file downloaded from a QUL account) only needs a new converter producing the same `pNNN.json` files. QUL states its data can be used commercially but each resource has its own licence.

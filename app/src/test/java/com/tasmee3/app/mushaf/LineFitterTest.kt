@@ -33,3 +33,26 @@ class LineFitterTest {
         assertEquals(Float.MAX_VALUE, LineFitter.fitSize(300f, 0f, 100f, 0, 0), 0f)
     }
 }
+
+class LineFitterUniformityTest {
+    @Test
+    fun medianOfOddAndEvenLists() {
+        assertEquals(3f, LineFitter.median(listOf(5f, 1f, 3f)), 0f)
+        assertEquals(2.5f, LineFitter.median(listOf(1f, 2f, 3f, 4f)), 0f)
+        assertEquals(0f, LineFitter.median(emptyList()), 0f)
+    }
+
+    @Test
+    fun uniformCapKeepsLooseLinesCloseToTheTypicalSize() {
+        assertEquals(22.4f, LineFitter.uniformCap(30f, 20f), 1e-4f)   // 20 * 1.12
+        assertEquals(15f, LineFitter.uniformCap(15f, 20f), 0f)        // the global maximum still wins
+        assertEquals(30f, LineFitter.uniformCap(30f, 0f), 0f)
+    }
+
+    @Test
+    fun justifiedGapSplitsTheLeftoverSpace() {
+        assertEquals(10f, LineFitter.justifiedGap(300f, 200f, 11), 1e-4f)
+        assertEquals(0f, LineFitter.justifiedGap(300f, 400f, 5), 0f)
+        assertEquals(0f, LineFitter.justifiedGap(300f, 100f, 1), 0f)
+    }
+}

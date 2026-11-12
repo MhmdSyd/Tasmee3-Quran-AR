@@ -22,4 +22,20 @@ object LineFitter {
 
     fun isCentered(naturalWidth: Float, availWidth: Float): Boolean =
         naturalWidth < availWidth * CENTER_RATIO
+
+    /** Typical (median) value; used so loose lines do not get much bigger text than the rest of the page. */
+    fun median(values: List<Float>): Float {
+        if (values.isEmpty()) return 0f
+        val sorted = values.sorted()
+        val mid = sorted.size / 2
+        return if (sorted.size % 2 == 1) sorted[mid] else (sorted[mid - 1] + sorted[mid]) / 2f
+    }
+
+    /** Upper limit for one line: the global maximum, and a little above the page's typical size. */
+    fun uniformCap(maxSize: Float, medianFit: Float, factor: Float = 1.12f): Float =
+        if (medianFit <= 0f) maxSize else minOf(maxSize, medianFit * factor)
+
+    /** Space between items when a line is justified to [avail] (0 for a single item). */
+    fun justifiedGap(avail: Float, itemsWidth: Float, items: Int): Float =
+        if (items <= 1) 0f else maxOf(0f, (avail - itemsWidth) / (items - 1))
 }

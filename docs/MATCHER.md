@@ -32,6 +32,14 @@ Kept as is: ta marbuta, hamza on waw/ya, ha.
 7. Otherwise a wrong word. Only ONE failed try is counted per segment, so a garbage segment can never reveal several words.
    First failed try: `WrongTry` (red outline). Second failed try: the word is revealed and marked WRONG_WORD.
 
+## Streaming (live reveal while speaking)
+The model decodes a whole phrase, so the app re-recognizes the phrase being spoken every ~350 ms (`SpeechPipeline`,
+`UtteranceTracker`) and calls `RecitationSession.onPartial`. A partial result only REVEALS words
+(`RecitationMatcher.previewCount`: consecutive in-order matches from the current position). It never flags mistakes, skips or
+restarts: those are judged on the final result after the pause (`onSegment`), which replaces the preview. Within one phrase
+the revealed count never shrinks, a late partial of an already-final phrase is ignored, and a hint takes over the first
+previewed word. First-try accuracy is unchanged: the final pass decides.
+
 ## Review reasons and first-try accuracy
 A word is "first try" only if it has no reason. Reasons: WRONG_WORD (failed try or skipped after a failed try), SKIPPED, LONG_PAUSE
 (silence over 5 s before the word), HINTED. SKIPPED and HINTED are additions to the handoff's reasons (wrong word, long pause).

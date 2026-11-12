@@ -32,6 +32,16 @@ object Tokens {
     val ErrorPill = Color(0xFFF6D9D3)
 
     val HiddenPill = Color(0xFFDDD4B8)
+
+    // Mushaf reading screens (reader and recitation), styled like the reference screenshots.
+    val MushafBg = Color(0xFFFAF9F9)
+    val MushafInk = Color(0xFF111111)
+    val MushafLine = Color(0xFFCDCDCD)        // thin line that stands for a hidden word
+    val MushafNewest = Color(0xFF1AA6D9)      // the word just recited
+    val MushafCard = Color(0xFFEDECEC)        // page info card
+    val MushafCardBorder = Color(0xFFCFCECE)
+    val Mint = Color(0xFF7BE0B0)              // big record button
+    val MintGlow = Color(0xFFBFF0D8)
 }
 
 private val Scheme = lightColorScheme(

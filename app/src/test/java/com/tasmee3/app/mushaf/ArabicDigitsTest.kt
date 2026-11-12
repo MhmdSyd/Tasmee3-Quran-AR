@@ -11,3 +11,8 @@ class ArabicDigitsTest {
     @Test fun parsesPersian() = assertEquals(12, ArabicDigits.toInt("۱۲"))
     @Test fun rejectsText() = assertNull(ArabicDigits.toInt("abc"))
 }
+
+class ArabicDigitsConvertTest {
+    @Test fun convertsDigitsInsideText() = assertEquals("٠٠:١٣", ArabicDigits.convert("00:13"))
+    @Test fun keepsOtherCharacters() = assertEquals("ص ١٢٨ | ٦:١", ArabicDigits.convert("ص 128 | 6:1"))
+}

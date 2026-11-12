@@ -6,7 +6,7 @@ Spec: see `DEVELOPER_HANDOFF.md`. Status: **step 6 of 7 (summary, settings, stor
 
 ## Assets (fonts and Mushaf data)
 They are not in git. `bash scripts/fetch_assets.sh` downloads and verifies them (CI does this automatically). See `THIRD_PARTY.md` for licenses and open points.
-`LAYOUT=QPC2 bash scripts/fetch_assets.sh` switches the Mushaf edition (default QPC1, 1405 print).
+The Mushaf is the **Madani mushaf, 1405 H print** (604 pages, 15 lines; QUL layout "Mushaf Al Madinah V1"). No other edition is selectable.
 
 ## Build
 - **CI (recommended):** push to GitHub, open Actions, download the `tasmee3-debug-apk` artifact. Details: `docs/BUILD_WITHOUT_ANDROID_STUDIO.md`.

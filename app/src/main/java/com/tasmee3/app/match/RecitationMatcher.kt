@@ -218,10 +218,47 @@ class RecitationMatcher(
         )
     }
 
-    private fun basmalaAllowedHere(): Boolean {
-        if (opening.isEmpty() || isComplete) return false
-        val id = words[position].id
+    private fun basmalaAllowedHere(): Boolean = basmalaAllowedAt(position)
+
+    private fun basmalaAllowedAt(index: Int): Boolean {
+        if (opening.isEmpty() || index >= words.size) return false
+        val id = words[index].id
         return id.endsWith(":1:1") && !id.startsWith("1:") && !id.startsWith("9:")
+    }
+
+    /**
+     * Live preview for streaming: how many expected words, starting at the current position, a PARTIAL
+     * (still growing) recognition result confirms in order. Nothing is changed, nothing is flagged: wrong words,
+     * skips and restarts are judged only when the final result of the phrase arrives ([onSegment]).
+     * Ignores a basmala at a surah start and a repeat of the previous word, like [onSegment] does.
+     */
+    fun previewCount(text: String): Int {
+        if (isComplete) return 0
+        val heard = ArabicNormalizer.words(text)
+        var pos = position
+        var i = 0
+        while (i < heard.size && pos < words.size) {
+            val h = heard[i]
+            val expected = words[pos].normalized
+            if (WordComparer.matches(expected, h, config.fuzzy)) {
+                pos++; i++; continue
+            }
+            if (i + 1 < heard.size && WordComparer.matches(expected, h + heard[i + 1], config.fuzzy)) {
+                pos++; i += 2; continue
+            }
+            if (pos == position && basmalaAllowedAt(pos) && opening.isNotEmpty() &&
+                WordComparer.matches(opening[0], h, config.fuzzy)
+            ) {
+                var j = 0
+                while (i < heard.size && j < opening.size && WordComparer.matches(opening[j], heard[i], config.fuzzy)) { i++; j++ }
+                continue
+            }
+            if (pos > 0 && WordComparer.sameWord(words[pos - 1].normalized, h)) {
+                i++; continue
+            }
+            break
+        }
+        return pos - position
     }
 
     private fun lookaheadSkip(heard: String): Int {
