@@ -11,7 +11,7 @@ class MushafParserTest {
       {"p":7,"s":2,"j":1,"l":[
         {"n":1,"t":"h","x":"عنوان","s":2},
         {"n":2,"t":"b"},
-        {"n":3,"t":"w","v":[["2:1:1","كلمةأ",0],["2:1:2","كلمةب",5]]},
+        {"n":3,"t":"w","c":1,"v":[["2:1:1","كلمةأ",0],["2:1:2","كلمةب",5]]},
         {"n":4,"t":"w","v":[["2:5:3","",6],["2:6:1","كلمةج",0]]}
       ]}
     """.trimIndent()
@@ -26,6 +26,8 @@ class MushafParserTest {
         assertTrue(page.lines[0] is MushafLine.SurahHeader)
         assertTrue(page.lines[1] is MushafLine.Basmala)
         val words = (page.lines[2] as MushafLine.Words).words
+        assertTrue((page.lines[2] as MushafLine.Words).centered)
+        assertFalse((page.lines[3] as MushafLine.Words).centered)
         assertEquals("2:1:2", words[1].location)
         assertEquals(5, words[1].verseEnd)
     }

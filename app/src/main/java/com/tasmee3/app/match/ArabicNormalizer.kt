@@ -6,10 +6,11 @@ package com.tasmee3.app.match
  *  1. Remove vowel marks U+064B-U+065F, dagger alef U+0670, Quranic annotation/waqf signs U+06D6-U+06ED,
  *     tatweel U+0640 and the invisible direction marks U+200E/U+200F.
  *  2. Alef with hamza/madda (U+0623, U+0625, U+0622) and alef wasla (U+0671) become plain alef U+0627.
- *  3. Alef maksura U+0649 becomes ya U+064A.
+ *  3. Alef maksura U+0649 becomes ya U+064A. Hamza on ya U+0626 becomes ya and hamza on waw U+0624 becomes waw:
+ *     the official Quran text writes them as a plain letter plus a hamza mark (which rule 1 removes).
  *  4. Everything that is not an Arabic letter (digits, punctuation, Latin) becomes a space.
  *  5. Runs of spaces collapse to one; the result is trimmed.
- * Not changed on purpose: ta marbuta, hamza on waw/ya (U+0624, U+0626), ha.
+ * Not changed on purpose: ta marbuta, the stand-alone hamza U+0621, ha.
  */
 object ArabicNormalizer {
     private fun isStripped(c: Char) =
@@ -22,7 +23,8 @@ object ArabicNormalizer {
             when {
                 isStripped(c) -> Unit
                 c == '\u0623' || c == '\u0625' || c == '\u0622' || c == '\u0671' -> sb.append('\u0627')
-                c == '\u0649' -> sb.append('\u064A')
+                c == '\u0649' || c == '\u0626' -> sb.append('\u064A')
+                c == '\u0624' -> sb.append('\u0648')
                 c in '\u0621'..'\u064A' -> sb.append(c)
                 else -> sb.append(' ')
             }

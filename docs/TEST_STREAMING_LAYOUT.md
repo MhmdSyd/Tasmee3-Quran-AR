@@ -14,3 +14,10 @@
 
 Please tell me: how many words behind your voice the screen is (none / one / several), whether the last word flickers,
 and whether the phone gets hot or slow on long ayahs (a 350 ms refresh of a long phrase costs battery).
+
+## Official QUL text and layout (added)
+- Page 1 and page 2: the short lines are centered like the printed mushaf; all other text lines run edge to edge.
+- Page 604: the three short surahs, each with its banner and basmala, fit one page.
+- Pages 11 (verse 2:72), 351 (24:11) and 535 (56:23): the words with hamza are drawn correctly (the official text writes
+  a hamza as a small mark above the letter); reciting them must still be accepted.
+- Settings > model card and the recitation behave as before.

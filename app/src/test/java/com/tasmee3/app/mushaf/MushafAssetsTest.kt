@@ -18,6 +18,8 @@ class MushafAssetsTest {
     fun allPagesAreWellFormed() {
         assumeTrue("assets not fetched", File(dir, "meta.json").exists())
         var verseEnds = 0
+        var centered = 0
+        var spokenWords = 0
         var lastJuz = 1
         for (n in 1..604) {
             val page = MushafParser.parsePage(File(dir, "p%03d.json".format(Locale.ROOT, n)).readText())
@@ -29,9 +31,13 @@ class MushafAssetsTest {
             for (line in page.lines.filterIsInstance<MushafLine.Words>()) {
                 assertTrue("page $n line ${line.number} too many items", line.words.size <= 16)
                 verseEnds += line.words.count { it.verseEnd > 0 }
+                spokenWords += line.words.count { it.isSpoken }
+                if (line.centered) centered++
             }
         }
         assertEquals(6236, verseEnds)
+        assertEquals(77_432, spokenWords)  // 83,668 word ids of the official layout minus 6,236 verse numbers
+        assertEquals(20, centered)         // centered text lines in the official 1405 layout
         assertEquals(30, lastJuz)
     }
 

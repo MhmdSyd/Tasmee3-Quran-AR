@@ -26,6 +26,13 @@ class ArabicNormalizerTest {
     }
 
     @Test
+    fun hamzaCarriersMatchTheOfficialTextEncoding() {
+        // official text: ya + hamza mark (U+0654); older text: hamza-on-ya U+0626. Same letters after normalising.
+        assertEquals(ArabicNormalizer.normalize("\u0627\u0645\u0631\u0626"), ArabicNormalizer.normalize("\u0627\u0645\u0631\u064A\u0654"))
+        assertEquals(ArabicNormalizer.normalize("\u0644\u0624\u0644\u0624"), ArabicNormalizer.normalize("\u0644\u0648\u0654\u0644\u0648\u0654"))
+    }
+
+    @Test
     fun replacesDigitsLatinAndPunctuationWithSpaces() {
         assertEquals("كتاب قلم", ArabicNormalizer.normalize("كتاب! 12 abc قلم."))
         assertEquals("", ArabicNormalizer.normalize("123 !!! ..."))

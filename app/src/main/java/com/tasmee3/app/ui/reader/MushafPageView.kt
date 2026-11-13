@@ -59,7 +59,7 @@ private class LinePlan(
     val gapPx: Float = 0f,                      // space between words (so hidden lines can run on unbroken)
 )
 
-private class Measured(val words: List<MushafWord>, val widthsRef: FloatArray, val marks: Int, val fit: Float)
+private class Measured(val words: List<MushafWord>, val widthsRef: FloatArray, val marks: Int, val fit: Float, val centered: Boolean)
 
 /**
  * One page of the Madani mushaf (1405 print) in the reading style of the reference screenshots:
@@ -136,7 +136,9 @@ private fun planPage(
         }
         val widths = FloatArray(words.size) { k -> if (words[k].isSpoken) width(words[k].text) else 0f }
         val marks = words.count { it.verseEnd > 0 }
-        Measured(words, widths, marks, LineFitter.fitSize(availPx, widths.sum(), REF_PX, words.size, marks))
+        // Basmala lines are centered; text lines say it in the official layout (no guessing).
+        val centered = line !is MushafLine.Words || line.centered
+        Measured(words, widths, marks, LineFitter.fitSize(availPx, widths.sum(), REF_PX, words.size, marks), centered)
     }
     val cap = LineFitter.uniformCap(maxSizePx, LineFitter.median(measured.filterNotNull().map { it.fit }))
 
@@ -149,8 +151,7 @@ private fun planPage(
         } else {
             val size = minOf(cap, m.fit)
             val items = m.words.size
-            val natural = size * LineFitter.emWidth(m.widthsRef.sum(), REF_PX, items, m.marks)
-            val centered = LineFitter.isCentered(natural, availPx)
+            val centered = m.centered
             val widths = FloatArray(items) { k -> m.widthsRef[k] * size / REF_PX }
             val itemsWidth = widths.sum() + m.marks * (LineFitter.MARK_EM + 0.1f) * size
             val gap = if (centered) size * 0.4f else LineFitter.justifiedGap(availPx, itemsWidth, items)

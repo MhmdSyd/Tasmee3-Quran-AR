@@ -13,7 +13,8 @@ sealed interface MushafLine {
 
     data class SurahHeader(override val number: Int, val text: String, val surah: Int) : MushafLine
     data class Basmala(override val number: Int) : MushafLine
-    data class Words(override val number: Int, val words: List<MushafWord>) : MushafLine
+    /** [centered] comes from the official layout: a few short lines (page 1, 2, the last pages) are centered, not justified. */
+    data class Words(override val number: Int, val words: List<MushafWord>, val centered: Boolean = false) : MushafLine
 }
 
 data class MushafPage(val number: Int, val surah: Int, val juz: Int, val lines: List<MushafLine>) {

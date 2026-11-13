@@ -1,0 +1,6 @@
+Mushaf layout, Quran text and font come from the Quran Universal Library (QUL) of Tarteel, https://qul.tarteel.ai:
+  - Layout "Quran Complex V1 (1405 print)" (Mushaf Al Madinah V1, 1405 H), 604 pages x 15 lines.
+  - Script "QPC Hafs" (Uthmani Hafs), verse by verse.
+  - Font UthmanicHafs1 Ver18 (KFGQPC Uthmanic Script Hafs), (c) King Fahd Glorious Quran Printing Complex.
+The files were downloaded from a QUL account by the app owner and are used unmodified.
+The font is covered by the KFGQPC end-user licence text (KFGQPC_EULA.txt). QUL states that each resource has its own licence.

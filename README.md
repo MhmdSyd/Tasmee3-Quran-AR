@@ -5,8 +5,7 @@ Offline Android app for Quran recitation practice (Madani mushaf, Hafs from Asim
 Spec: see `DEVELOPER_HANDOFF.md`. Status: **step 6 of 7 (summary, settings, storage, icon)** with the `quran-asr-small` model (see `docs/MODEL.md`). The green button on the reader starts a live, fully offline recitation (`docs/TEST_STEP5.md`, `docs/TEST_STEP6.md`). Matcher rules: `docs/MATCHER.md`. Last step: signed release build (step 7).
 
 ## Assets (fonts and Mushaf data)
-They are not in git. `bash scripts/fetch_assets.sh` downloads and verifies them (CI does this automatically). See `THIRD_PARTY.md` for licenses and open points.
-The Mushaf is the **Madani mushaf, 1405 H print** (604 pages, 15 lines; QUL layout "Mushaf Al Madinah V1"). No other edition is selectable.
+The Mushaf is built from the official QUL files in `data/qul/` (layout "Quran Complex V1, 1405 print", Uthmani Hafs script, Hafs font Ver18): `bash scripts/fetch_assets.sh` checks their checksums, builds the pages and downloads the rest (CI does this automatically). See `data/qul/README.md` and `THIRD_PARTY.md` for sources and licences. No other mushaf edition is selectable.
 
 ## Build
 - **CI (recommended):** push to GitHub, open Actions, download the `tasmee3-debug-apk` artifact. Details: `docs/BUILD_WITHOUT_ANDROID_STUDIO.md`.

@@ -11,9 +11,9 @@ Pure Kotlin, package `com.tasmee3.app.match`. No Android classes, so it is unit-
 ## Normalisation (applied to expected AND heard text)
 1. Remove vowel marks U+064B-U+065F, dagger alef U+0670, Quranic annotation/waqf signs U+06D6-U+06ED, tatweel U+0640, U+200E/U+200F.
 2. Alef with hamza or madda (U+0623, U+0625, U+0622) and alef wasla (U+0671) become alef U+0627.
-3. Alef maksura U+0649 becomes ya U+064A.
+3. Alef maksura U+0649 becomes ya U+064A; hamza on ya U+0626 becomes ya and hamza on waw U+0624 becomes waw (the official text writes them as a plain letter plus a hamza mark).
 4. Anything that is not an Arabic letter (digits, punctuation, Latin) becomes a space; spaces collapse.
-Kept as is: ta marbuta, hamza on waw/ya, ha.
+Kept as is: ta marbuta, the stand-alone hamza U+0621, ha.
 
 ## When two words are "the same"
 - Equal after normalisation, or equal after also removing every alef (needs at least 3 letters left).

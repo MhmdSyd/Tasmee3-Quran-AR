@@ -4,18 +4,19 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-# Layout: Mushaf Al Madinah V1 (1405H print), the 604-page, 15-line Madani mushaf. No other edition is selectable.
-LAYOUT="QPC1"   # name of this edition in the zonetecde/mushaf-layout dataset (same data as QUL layout 2)
-
-LAYOUT_REPO="zonetecde/mushaf-layout"
-LAYOUT_COMMIT="421e9eaa991897ecd50d7abb79160651a45976d3"
-FONT_REPO="thetruetruth/quran-data-kfgqpc"
-FONT_COMMIT="281dbbe8eed1370daa5a023b6cd81655cbfd6473"
+# Official QUL (Tarteel Quran Universal Library) files, stored in git under data/qul/ (downloaded from a QUL account):
+#   qpc-v1-15-lines.db   layout "Quran Complex V1 (1405 print)", 604 pages, 15 lines
+#   qpc-hafs.db          Uthmani Hafs script, verse by verse
+#   UthmanicHafs1Ver18.ttf  the KFGQPC Uthmanic Hafs font that script is made for
+# Their checksums are pinned here so a changed or damaged copy fails the build.
+LAYOUT_DB_SHA256="54e5cf604da95f9e65db3fb9dce0c75c17d197e41543ba846ed49264f9c0442a"
+SCRIPT_DB_SHA256="bde64c73ec174bd163d21af2f973bf81a85eef50fd279ebde637f8d7c012fc36"
 FONT_SHA256="a0636e68e375af9552470d67773936f54d536e6586ce2608311b2fe7f9cbec3a"
+NAMES_SHA256="575417a57423a3084e0bbf01cdf8411e688b00e660f125407563e115be73f2ab"
+OUT_SHA256="b201ec26bc695564877c6bd8b5118e02759a035c886ec5d09d1e9ba199a1d9bb"   # the pages built from the files above
 CAIRO_COMMIT="5bb28733cec313b63fbd415b574b5ae35c8aa8b8"
 CAIRO_SHA256="667c987182391c91f4e57a2f455b1794fb5e3ee6ca4ef3383e86bb690fa9c964"
 OFL_SHA256="a4554e1799d42e1405924b61eb0e0722ae1623b1f1f07f995348f96c496362a9"
-OUT_SHA256="95e0269a774ac0a1f957ef1144726a7b432c622630dd62d268cf811d667e04e0"
 
 CACHE="$ROOT/.assets-cache"
 ASSETS="$ROOT/app/src/main/assets"
@@ -32,22 +33,19 @@ fetch() { # url dest sha256
 }
 
 echo "== Fonts"
-fetch "https://raw.githubusercontent.com/$FONT_REPO/$FONT_COMMIT/hafs/font/hafs.18.ttf" "$FONTS/uthmanic_hafs.ttf" "$FONT_SHA256"
+check() { echo "$2  $1" | sha256sum -c --status || { echo "Checksum mismatch for $1 (is it the original QUL file?)" >&2; exit 1; }; }
+check "$ROOT/data/qul/UthmanicHafs1Ver18.ttf" "$FONT_SHA256"
+cp "$ROOT/data/qul/UthmanicHafs1Ver18.ttf" "$FONTS/uthmanic_hafs.ttf"
 fetch "https://raw.githubusercontent.com/google/fonts/$CAIRO_COMMIT/ofl/cairo/Cairo%5Bslnt%2Cwght%5D.ttf" "$FONTS/cairo.ttf" "$CAIRO_SHA256"
 fetch "https://raw.githubusercontent.com/google/fonts/$CAIRO_COMMIT/ofl/cairo/OFL.txt" "$ASSETS/licenses/Cairo_OFL.txt" "$OFL_SHA256"
 cp "$ROOT"/third_party_licenses/*.txt "$ASSETS/licenses/"
 
-echo "== Layout source ($LAYOUT)"
-SRC="$CACHE/$LAYOUT"
-mkdir -p "$SRC"
-if [ "$(ls "$SRC" 2>/dev/null | wc -l)" -ne 604 ]; then
-  seq -w 1 604 | xargs -P 8 -I{} curl -fsSL --retry 3 -o "$SRC/page-{}.json" \
-    "https://raw.githubusercontent.com/$LAYOUT_REPO/$LAYOUT_COMMIT/mushaf/$LAYOUT/page-{}.json"
-fi
-
-echo "== Build compact per-page assets"
+echo "== Mushaf pages from the official QUL layout and text (Madani mushaf, 1405 H print)"
+check "$ROOT/data/qul/qpc-v1-15-lines.db" "$LAYOUT_DB_SHA256"
+check "$ROOT/data/qul/qpc-hafs.db" "$SCRIPT_DB_SHA256"
+check "$ROOT/data/surah-names-ar.json" "$NAMES_SHA256"
 rm -rf "$ASSETS/mushaf"
-python3 "$ROOT/tools/build_layout.py" "$SRC" "$ASSETS/mushaf"
+python3 "$ROOT/tools/build_layout.py" "$ROOT/data" "$ASSETS/mushaf"
 ACTUAL="$(cd "$ASSETS/mushaf" && find . -type f -name '*.json' | LC_ALL=C sort | xargs sha256sum | sha256sum | cut -d' ' -f1)"
 if [ "$ACTUAL" != "$OUT_SHA256" ]; then
   echo "Layout output checksum mismatch: expected $OUT_SHA256 got $ACTUAL" >&2; exit 1

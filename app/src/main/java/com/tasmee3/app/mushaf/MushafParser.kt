@@ -21,7 +21,7 @@ object MushafParser {
                         val w = v.getJSONArray(j)
                         words.add(MushafWord(w.getString(0), w.getString(1), w.getInt(2)))
                     }
-                    lines.add(MushafLine.Words(n, words))
+                    lines.add(MushafLine.Words(n, words, l.optInt("c", 0) == 1))
                 }
                 else -> error("Unknown line type '$type'")
             }
